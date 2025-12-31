@@ -14,13 +14,21 @@
 
         body {
             min-height: 100vh;
-            background-color: #161929;
+            background-color: #161929; /* 星空背景常驻 */
             color: #fff;
             position: relative;
             overflow: hidden;
         }
 
-        /* 返回主页按钮样式（层级最高：99999） */
+        /* 隐藏UI时，隐藏所有按钮和倒计时 */
+        body.hidden-all-ui .back-home,
+        body.hidden-all-ui .control-btn-group,
+        body.hidden-all-ui .test-btn-group,
+        body.hidden-all-ui .countdown-layer {
+            display: none !important;
+        }
+
+        /* 返回主页按钮（层级最高：99999） */
         .back-home {
             position: fixed;
             top: 20px;
@@ -29,7 +37,7 @@
             padding: 10px 20px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 8px;
-            border: 1px solid #ffc107; /* 金色边框 */
+            border: 1px solid #ffc107;
             color: #fff;
             text-decoration: none;
             font-size: 1.2rem;
@@ -46,10 +54,39 @@
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
         }
 
-        /* 测试按钮样式（层级最高：99999） */
-        .test-btn-group {
+        /* 控制按钮组（右上角：全屏+隐藏UI，层级最高：99999） */
+        .control-btn-group {
             position: fixed;
             top: 20px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+        }
+
+        /* 测试按钮组（右上角下方，层级最高：99999） */
+        .test-btn-group {
+            position: fixed;
+            top: 70px;
             right: 20px;
             z-index: 99999;
             display: flex;
@@ -58,12 +95,12 @@
         }
 
         .test-btn {
-            padding: 10px 20px;
-            background: linear-gradient(45deg, #d92121, #ff5722); /* 喜庆红渐变 */
+            padding: 10px 16px;
+            background: linear-gradient(45deg, #d92121, #ff5722);
             border-radius: 8px;
             border: 1px solid #ffc107;
             color: #fff;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -77,7 +114,7 @@
             box-shadow: 0 0 20px rgba(255, 193, 7, 0.6);
         }
 
-        /* 核心：倒计时图层样式（层级：9999） */
+        /* 核心：倒计时图层（层级：9999） */
         .countdown-layer {
             position: fixed;
             z-index: 9999;
@@ -86,13 +123,13 @@
             padding: 20px;
             color: #fff;
             transition: all 0.3s ease;
-            pointer-events: auto; /* 只拦截自身点击 */
+            pointer-events: auto;
             border: 1px solid transparent;
             background-clip: padding-box, border-box;
             background-origin: padding-box, border-box;
         }
 
-        /* 15分钟前：全屏金红渐变（专属背景） */
+        /* 全屏倒计时（金红渐变图层，不遮挡星空） */
         .countdown-layer.full-screen {
             top: 0;
             left: 0;
@@ -104,59 +141,34 @@
             align-items: center;
             justify-content: center;
             border: none;
-            /* 仅全屏时显示金红渐变背景+动画 */
             background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
                               linear-gradient(45deg, #d92121, #ffc107);
             background-size: 400% 400%;
             animation: bgFestive 15s ease infinite;
         }
 
-        /* 金红渐变动画（仅全屏生效） */
+        /* 金红渐变动画 */
         @keyframes bgFestive {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
-        /* 15分钟内：左上角小窗口（透明背景，露出星空） */
+        /* 缩小版倒计时（左下角，透明背景，露出星空） */
         .countdown-layer.small-window {
-            top: 20px;
+            bottom: 20px;
             left: 20px;
+            top: auto; /* 固定在左下角 */
             width: auto;
             height: auto;
-            /* 透明背景，只留半透明边框 */
             background-image: linear-gradient(transparent, transparent), 
                               linear-gradient(45deg, rgba(217,33,33,0.6), rgba(255,193,7,0.6));
         }
 
-        /* 隐藏/展开按钮 */
-        .toggle-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(45deg, #d92121, #ff5722);
-            border: 1px solid #ffc107;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            display: none; /* 15分钟前隐藏 */
-            z-index: 10000;
-        }
-
-        .countdown-layer.small-window .toggle-btn {
-            display: flex; /* 15分钟内显示 */
-        }
-
-        .toggle-btn:hover {
-            background: linear-gradient(45deg, #b71c1c, #e64a19);
-            box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
+        /* 最后5分钟：时间数字变红 */
+        .layer-time-number.red-text {
+            color: #ff3b30 !important;
+            text-shadow: 0 0 10px rgba(255, 59, 48, 0.8);
         }
 
         /* 倒计时内容容器 */
@@ -174,7 +186,7 @@
         .layer-title {
             font-size: 2rem;
             text-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
-            color: #ffc107; /* 金色标题 */
+            color: #ffc107;
         }
 
         .countdown-layer.small-window .layer-title {
@@ -205,7 +217,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,0.3); /* 半透明数字背景 */
+            background: rgba(0,0,0,0.3);
             border-radius: 8px;
             border: 1px solid #ffc107;
             color: #fff;
@@ -215,30 +227,17 @@
             font-size: 1.5rem;
             width: 40px;
             height: 40px;
-            background: rgba(0,0,0,0.2); /* 15分钟内更透明 */
+            background: rgba(0,0,0,0.2);
         }
 
         .layer-time-label {
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #ffecb3; /* 浅金色 */
+            color: #ffecb3;
         }
 
-        /* 隐藏倒计时内容时的样式（露出星空） */
-        .countdown-layer.hidden {
-            padding: 0;
-            width: 44px;
-            height: 44px;
-            background-image: none;
-            border: none;
-        }
-
-        .countdown-layer.hidden .countdown-content {
-            display: none;
-        }
-
-        /* 原有烟花/星空背景样式（完全保留旧代码逻辑） */
+        /* 原有烟花/星空背景样式（完全保留） */
         audio { opacity: 0; }
        .message {
             position: fixed;
@@ -266,7 +265,7 @@
             height: 3px;
             border-radius: 50%;
             position: absolute;
-            background-color: rgba(231, 200, 160, 0.8); /* 旧代码星星颜色 */
+            background-color: rgba(231, 200, 160, 0.8);
             box-shadow: 0 0 40px 0 rgba(231, 200, 160, 0.8);
             animation: glow 5s infinite;
             z-index: 0;
@@ -298,24 +297,52 @@
             20% { transform: rotate(-45deg) translateX(-100vw); opacity: 0; }
             100% { transform: rotate(-45deg) translateX(-100vw); opacity: 0; }
         }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .control-btn-group {
+                flex-direction: column;
+                top: 20px;
+                right: 20px;
+            }
+            .test-btn-group {
+                top: 140px;
+                right: 20px;
+            }
+            .layer-time-number {
+                font-size: 2rem;
+                width: 60px;
+                height: 60px;
+            }
+            .countdown-layer.small-window .layer-time-number {
+                font-size: 1.2rem;
+                width: 35px;
+                height: 35px;
+            }
+        }
     </style>
-    <!-- 原有资源引入（完全保留） -->
+    <!-- 原有资源引入 -->
     <link rel="icon" type="image/x-icon" href="icon/favicon-f.ico">
     <link rel="stylesheet" href="documents/sweetalert2.min.css">
 </head>
 <body>
-    <!-- 返回主页按钮（层级最高） -->
+    <!-- 返回主页按钮（左上角） -->
     <a href="https://ericoec.github.io" class="back-home" target="_self">← 主页</a>
 
-    <!-- 测试按钮组（层级最高） -->
+    <!-- 控制按钮组（右上角：全屏+隐藏UI） -->
+    <div class="control-btn-group">
+        <button class="control-btn" id="fullscreenBtn">全屏倒计时</button>
+        <button class="control-btn" id="hideUiBtn">隐藏UI</button>
+    </div>
+
+    <!-- 测试按钮组（右上角下方） -->
     <div class="test-btn-group">
         <div class="test-btn" id="test15sBtn">测试：倒数15秒</div>
         <div class="test-btn" id="test15m15sBtn">测试：倒数15分15秒</div>
     </div>
 
-    <!-- 核心：倒计时图层（层级：9999） -->
-    <div class="countdown-layer" id="countdownLayer">
-        <button class="toggle-btn" id="toggleBtn">−</button>
+    <!-- 倒计时图层（默认左下角小窗口） -->
+    <div class="countdown-layer small-window" id="countdownLayer">
         <div class="countdown-content">
             <h2 class="layer-title">距离2026年元旦还有</h2>
             <div class="layer-time-container">
@@ -343,7 +370,7 @@
         </div>
     </div>
 
-    <!-- 原有烟花/星空背景容器（完全保留旧代码） -->
+    <!-- 原有烟花/星空背景容器 -->
     <div id="backgroundRendering" style="z-index: 0;"></div>
     <div class="meteor"></div>
     <div class="meteor" style="animation-delay: 2s; left: 60%;"></div>
@@ -361,53 +388,57 @@
         <div class="shape">🏮财源广进🏮</div>
     </div>
 
-    <!-- 原有脚本引入（完全保留） -->
+    <!-- 原有脚本引入 -->
     <script src="documents/sweetalert2.all.min.js"></script>
     <script>
         // 目标时间：2026年1月1日 00:00:00
         let targetDate = new Date('2026-01-01T00:00:00').getTime();
         let countdownEnded = false;
         const countdownLayer = document.getElementById('countdownLayer');
-        const toggleBtn = document.getElementById('toggleBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const hideUiBtn = document.getElementById('hideUiBtn');
         const test15sBtn = document.getElementById('test15sBtn');
         const test15m15sBtn = document.getElementById('test15m15sBtn');
-        const fifteenMinutes = 15 * 60 * 1000; // 15分钟毫秒数
+        const fiveMinutes = 5 * 60 * 1000; // 最后5分钟阈值
+        const timeNumberEls = document.querySelectorAll('.layer-time-number');
 
-        // 测试15秒按钮
+        // 1. 全屏/退出全屏切换
+        fullscreenBtn.addEventListener('click', function() {
+            if (countdownLayer.classList.contains('full-screen')) {
+                // 退出全屏：回到左下角小窗口
+                countdownLayer.className = 'countdown-layer small-window';
+                fullscreenBtn.textContent = '全屏倒计时';
+            } else {
+                // 进入全屏：金红渐变图层
+                countdownLayer.className = 'countdown-layer full-screen';
+                fullscreenBtn.textContent = '退出全屏';
+            }
+        });
+
+        // 2. 隐藏UI功能（隐藏所有按钮和倒计时，刷新恢复）
+        hideUiBtn.addEventListener('click', function() {
+            document.body.classList.add('hidden-all-ui');
+            alert('所有UI已隐藏，刷新网页可恢复');
+        });
+
+        // 3. 测试按钮逻辑
         test15sBtn.addEventListener('click', function() {
             const now = new Date().getTime();
             targetDate = now + 15 * 1000;
             countdownEnded = false;
-            alert('测试模式开启！倒计时15秒（小窗口+星空背景）');
+            alert('测试模式开启！倒计时15秒（最后5分钟数字变红）');
             updateCountdown();
         });
 
-        // 测试15分15秒按钮
         test15m15sBtn.addEventListener('click', function() {
             const now = new Date().getTime();
             targetDate = now + 15 * 60 * 1000 + 15 * 1000;
             countdownEnded = false;
-            alert('测试模式开启！前15分钟全屏金红渐变，最后15秒小窗口+星空背景');
+            alert('测试模式开启！倒计时15分15秒（最后5分钟数字变红）');
             updateCountdown();
         });
 
-        // 最小化/展开按钮逻辑
-        toggleBtn.addEventListener('click', function() {
-            countdownLayer.classList.toggle('hidden');
-            if (countdownLayer.classList.contains('hidden')) {
-                toggleBtn.textContent = '+';
-                toggleBtn.style.position = 'fixed';
-                toggleBtn.style.top = '20px';
-                toggleBtn.style.left = '20px';
-            } else {
-                toggleBtn.textContent = '−';
-                toggleBtn.style.position = 'absolute';
-                toggleBtn.style.top = '10px';
-                toggleBtn.style.left = '10px';
-            }
-        });
-
-        // 核心：更新倒计时+图层状态
+        // 4. 核心：更新倒计时+样式
         function updateCountdown() {
             const now = new Date().getTime();
             let distance = targetDate - now;
@@ -433,14 +464,11 @@
             document.getElementById('layerSeconds').innerText = padZero(seconds);
             document.getElementById('layerMilliseconds').innerText = padZero(milliseconds, 3);
 
-            // 更新图层状态
-            if (distance > fifteenMinutes && !countdownEnded) {
-                countdownLayer.className = 'countdown-layer full-screen';
-                toggleBtn.textContent = '−';
-                toggleBtn.style.position = 'absolute';
+            // 最后5分钟：时间数字变红
+            if (distance > 0 && distance <= fiveMinutes) {
+                timeNumberEls.forEach(el => el.classList.add('red-text'));
             } else {
-                countdownLayer.className = 'countdown-layer small-window';
-                toggleBtn.textContent = countdownLayer.classList.contains('hidden') ? '+' : '−';
+                timeNumberEls.forEach(el => el.classList.remove('red-text'));
             }
 
             // 持续更新
@@ -449,10 +477,10 @@
             }
         }
 
-        // 初始化
+        // 初始化：默认左下角小窗口+星空背景
         updateCountdown();
 
-        // ===================== 原有烟花/星空逻辑（完全保留旧代码） =====================
+        // ===================== 原有烟花/星空逻辑（完全保留） =====================
         function initFireworks() {
             console.error = function() {};
             console.warn = function() {};
@@ -512,7 +540,7 @@
                     backgroundRendering.appendChild(single);
                 }
             };
-            generateStars(getRandom(140, 240)); // 生成星空星星
+            generateStars(getRandom(140, 240));
             let fireworksCanvas = document.getElementById("fireworks");
             let currentFireworks = document.createElement("canvas");
             let currentObject = currentFireworks.getContext("2d");
