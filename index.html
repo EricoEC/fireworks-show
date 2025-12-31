@@ -113,7 +113,6 @@
         /* 隐藏UI时，隐藏所有按钮和倒计时 */
         body.hidden-all-ui .back-home,
         body.hidden-all-ui .control-btn-group,
-        body.hidden-all-ui .test-btn-group,
         body.hidden-all-ui .countdown-layer {
             display: none !important;
         }
@@ -171,37 +170,6 @@
             background: rgba(0, 0, 0, 0.7);
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
-        }
-
-        /* 测试按钮组（右上角下方，层级最高：99999） */
-        .test-btn-group {
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .test-btn {
-            padding: 10px 16px;
-            background: linear-gradient(45deg, #d92121, #ff5722);
-            border-radius: 8px;
-            border: 1px solid #ffc107;
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
-            text-align: center;
-        }
-
-        .test-btn:hover {
-            background: linear-gradient(45deg, #b71c1c, #e64a19);
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 193, 7, 0.6);
         }
 
         /* 核心：倒计时图层（层级：9999，高于烟花z-index 9999，持平但不冲突） */
@@ -333,10 +301,6 @@
                 top: 20px;
                 right: 20px;
             }
-            .test-btn-group {
-                top: 140px;
-                right: 20px;
-            }
             .layer-time-number {
                 font-size: 2rem;
                 width: 60px;
@@ -375,12 +339,6 @@
     <div class="control-btn-group">
         <button class="control-btn" id="fullscreenBtn">全屏倒计时</button>
         <button class="control-btn" id="hideUiBtn">隐藏UI</button>
-    </div>
-
-    <!-- 测试按钮组（右上角下方） -->
-    <!--<div class="test-btn-group">
-        <div class="test-btn" id="test15sBtn">测试：倒数15秒</div>
-        <div class="test-btn" id="test15m15sBtn">测试：倒数15分15秒</div>
     </div>
 
     <!-- 倒计时图层（默认左下角小窗口） -->
@@ -726,7 +684,7 @@
                 let text = ele.innerHTML;
                 context.save();
                 let fontSize = getRandom(3, 11);
-                context.font = fontSize + "vw 宋体 bold";
+                context.font = fontSize + "vw bold"; // 移除固定字体"宋体"
                 context.textAlign = "center";
                 context.textBaseline = "middle";
                 context.fillStyle =
@@ -839,8 +797,6 @@
         const countdownLayer = document.getElementById('countdownLayer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const hideUiBtn = document.getElementById('hideUiBtn');
-        const test15sBtn = document.getElementById('test15sBtn');
-        const test15m15sBtn = document.getElementById('test15m15sBtn');
         const fiveMinutes = 5 * 60 * 1000; // 最后5分钟阈值
         const timeNumberEls = document.querySelectorAll('.layer-time-number');
 
@@ -861,23 +817,6 @@
         hideUiBtn.addEventListener('click', function() {
             document.body.classList.add('hidden-all-ui');
             alert('所有UI已隐藏，刷新网页可恢复');
-        });
-
-        // 3. 测试按钮逻辑
-        test15sBtn.addEventListener('click', function() {
-            const now = new Date().getTime();
-            targetDate = now + 15 * 1000;
-            countdownEnded = false;
-            alert('测试模式开启！倒计时15秒（最后5分钟数字变红）');
-            updateCountdown();
-        });
-
-        test15m15sBtn.addEventListener('click', function() {
-            const now = new Date().getTime();
-            targetDate = now + 15 * 60 * 1000 + 15 * 1000;
-            countdownEnded = false;
-            alert('测试模式开启！倒计时15分15秒（最后5分钟数字变红）');
-            updateCountdown();
         });
 
         // 4. 核心：更新倒计时+样式
