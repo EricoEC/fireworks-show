@@ -1,218 +1,25 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026元旦烟花</title>
+    <title>2025新年烟花</title>
+    <link rel="icon" type="image/x-icon" href="icon/favicon-f.ico">
+    <link rel="stylesheet" href="documents/sweetalert2.min.css">
     <style>
-        * {
+        html,
+        body {
+            width: 100%;
+            height: 100%;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        body {
-            min-height: 100vh;
-            background-color: #161929; /* 星空背景常驻 */
-            color: #fff;
+            background-color: #161929;
             position: relative;
             overflow: hidden;
+            user-select: none;
         }
-        /* 隐藏UI时，隐藏所有按钮和倒计时 */
-        body.hidden-all-ui .back-home,
-        body.hidden-all-ui .control-btn-group,
-        body.hidden-all-ui .test-btn-group,
-        body.hidden-all-ui .countdown-layer {
-            display: none !important;
+        audio {
+            opacity: 0;
         }
-        /* 返回主页按钮（层级最高：99999） */
-        .back-home {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 99999;
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
-            border: 1px solid #ffc107;
-            color: #fff;
-            text-decoration: none;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
-        }
-        .back-home:hover {
-            background: rgba(0, 0, 0, 0.7);
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
-        }
-        /* 控制按钮组（右上角：全屏+隐藏UI，层级最高：99999） */
-        .control-btn-group {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 99999;
-            display: flex;
-            gap: 10px;
-        }
-        .control-btn {
-            padding: 10px 16px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
-            border: 1px solid #ffc107;
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
-        }
-        .control-btn:hover {
-            background: rgba(0, 0, 0, 0.7);
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
-        }
-        /* 测试按钮组（右上角下方，层级最高：99999） */
-        .test-btn-group {
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .test-btn {
-            padding: 10px 16px;
-            background: linear-gradient(45deg, #d92121, #ff5722);
-            border-radius: 8px;
-            border: 1px solid #ffc107;
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
-            text-align: center;
-        }
-        .test-btn:hover {
-            background: linear-gradient(45deg, #b71c1c, #e64a19);
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 193, 7, 0.6);
-        }
-        /* 核心：倒计时图层（层级：9999） */
-        .countdown-layer {
-            position: fixed;
-            z-index: 9999;
-            backdrop-filter: blur(4px);
-            border-radius: 16px;
-            padding: 20px;
-            color: #fff;
-            transition: all 0.3s ease;
-            pointer-events: auto;
-            border: 1px solid transparent;
-            background-clip: padding-box, border-box;
-            background-origin: padding-box, border-box;
-        }
-        /* 全屏倒计时（金红渐变图层，不遮挡星空） */
-        .countdown-layer.full-screen {
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            border-radius: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
-                              linear-gradient(45deg, #d92121, #ffc107);
-            background-size: 400% 400%;
-            animation: bgFestive 15s ease infinite;
-        }
-        /* 金红渐变动画 */
-        @keyframes bgFestive {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        /* 缩小版倒计时（左下角，透明背景，露出星空） */
-        .countdown-layer.small-window {
-            bottom: 20px;
-            left: 20px;
-            top: auto; /* 固定在左下角 */
-            width: auto;
-            height: auto;
-            background-image: linear-gradient(transparent, transparent), 
-                              linear-gradient(45deg, rgba(217,33,33,0.6), rgba(255,193,7,0.6));
-        }
-        /* 最后5分钟：时间数字变红 */
-        .layer-time-number.red-text {
-            color: #ff3b30 !important;
-            text-shadow: 0 0 10px rgba(255, 59, 48, 0.8);
-        }
-        /* 倒计时内容容器 */
-        .countdown-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-        }
-        .countdown-layer.small-window .countdown-content {
-            gap: 8px;
-        }
-        .layer-title {
-            font-size: 2rem;
-            text-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
-            color: #ffc107;
-        }
-        .countdown-layer.small-window .layer-title {
-            font-size: 1.2rem;
-        }
-        .layer-time-container {
-            display: flex;
-            gap: 1rem;
-        }
-        .countdown-layer.small-window .layer-time-container {
-            gap: 0.5rem;
-        }
-        .layer-time-unit {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-        .layer-time-number {
-            font-size: 3rem;
-            font-weight: 700;
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            border: 1px solid #ffc107;
-            color: #fff;
-        }
-        .countdown-layer.small-window .layer-time-number {
-            font-size: 1.5rem;
-            width: 40px;
-            height: 40px;
-            background: rgba(0,0,0,0.2);
-        }
-        .layer-time-label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #ffecb3;
-        }
-        /* 烟花/星空背景样式（沿用旧代码完整样式） */
-        audio { opacity: 0; }
        .message {
             position: fixed;
             left: 50%;
@@ -274,18 +81,251 @@
             left: 0;
         }
         @keyframes glow {
-            0% { opacity: 0.9; }
-            50% { opacity: 0.2; }
-            100% { opacity: 0.9; }
+            0% {
+                opacity: 0.9;
+            }
+            50% {
+                opacity: 0.2;
+            }
+            100% {
+                opacity: 0.9;
+            }
         }
         @keyframes meteor {
-            0% { transform: rotate(-45deg) translateX(0); opacity: 0.3; }
-            10% { opacity: 1; }
-            20% { transform: rotate(-45deg) translateX(-100vw); opacity: 0; }
-            100% { transform: rotate(-45deg) translateX(-100vw); opacity: 0; }
+            0% {
+                transform: rotate(-45deg) translateX(0);
+                opacity: 0.3;
+            }
+            10% {
+                opacity: 1;
+            }
+            20% {
+                transform: rotate(-45deg) translateX(-100vw);
+                opacity: 0;
+            }
+            100% {
+                transform: rotate(-45deg) translateX(-100vw);
+                opacity: 0;
+            }
         }
-        #fireworks { z-index: 9998 !important; } /* 低于倒计时图层 */
-        #backgroundRendering { z-index: 0 !important; }
+
+        /* ========== 新增：倒计时图层样式（完全保留原功能） ========== */
+        /* 隐藏UI时，隐藏所有按钮和倒计时 */
+        body.hidden-all-ui .back-home,
+        body.hidden-all-ui .control-btn-group,
+        body.hidden-all-ui .test-btn-group,
+        body.hidden-all-ui .countdown-layer {
+            display: none !important;
+        }
+
+        /* 返回主页按钮（层级最高：99999） */
+        .back-home {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 99999;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .back-home:hover {
+            background: rgba(0, 0, 0, 0.7);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+        }
+
+        /* 控制按钮组（右上角：全屏+隐藏UI，层级最高：99999） */
+        .control-btn-group {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+        }
+
+        /* 测试按钮组（右上角下方，层级最高：99999） */
+        .test-btn-group {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .test-btn {
+            padding: 10px 16px;
+            background: linear-gradient(45deg, #d92121, #ff5722);
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+            text-align: center;
+        }
+
+        .test-btn:hover {
+            background: linear-gradient(45deg, #b71c1c, #e64a19);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.6);
+        }
+
+        /* 核心：倒计时图层（层级：9999，高于烟花z-index 9999，持平但不冲突） */
+        .countdown-layer {
+            position: fixed;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            border: 1px solid transparent;
+            background-clip: padding-box, border-box;
+            background-origin: padding-box, border-box;
+        }
+
+        /* 全屏倒计时（金红渐变图层，不遮挡烟花） */
+        .countdown-layer.full-screen {
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
+                              linear-gradient(45deg, #d92121, #ffc107);
+            background-size: 400% 400%;
+            animation: bgFestive 15s ease infinite;
+        }
+
+        /* 金红渐变动画 */
+        @keyframes bgFestive {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 缩小版倒计时（左下角，透明背景，露出烟花） */
+        .countdown-layer.small-window {
+            bottom: 20px;
+            left: 20px;
+            top: auto; /* 固定在左下角 */
+            width: auto;
+            height: auto;
+            background-image: linear-gradient(transparent, transparent), 
+                              linear-gradient(45deg, rgba(217,33,33,0.6), rgba(255,193,7,0.6));
+        }
+
+        /* 最后5分钟：时间数字变红 */
+        .layer-time-number.red-text {
+            color: #ff3b30 !important;
+            text-shadow: 0 0 10px rgba(255, 59, 48, 0.8);
+        }
+
+        /* 倒计时内容容器 */
+        .countdown-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .countdown-layer.small-window .countdown-content {
+            gap: 8px;
+        }
+
+        .layer-title {
+            font-size: 2rem;
+            text-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+            color: #ffc107;
+        }
+
+        .countdown-layer.small-window .layer-title {
+            font-size: 1.2rem;
+        }
+
+        .layer-time-container {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .countdown-layer.small-window .layer-time-container {
+            gap: 0.5rem;
+        }
+
+        .layer-time-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .layer-time-number {
+            font-size: 3rem;
+            font-weight: 700;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+            color: #fff;
+        }
+
+        .countdown-layer.small-window .layer-time-number {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .layer-time-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffecb3;
+        }
+
         /* 响应式适配 */
         @media (max-width: 768px) {
             .control-btn-group {
@@ -309,23 +349,40 @@
             }
         }
     </style>
-    <!-- 资源引入（沿用旧代码路径） -->
-    <link rel="icon" type="image/x-icon" href="icon/favicon-f.ico">
-    <link rel="stylesheet" href="documents/sweetalert2.min.css">
 </head>
-<body>
+<body onselectstart="return false">
+    <div id="backgroundRendering" style="z-index: 0;"></div>
+    <canvas id="fireworks" style="z-index: 9999;">
+    </canvas>
+    <audio id="bgm" src="music/music-f.mp3" loop>
+    </audio>
+    <div style="display: none">
+        <div class="shape">🏮2025新年快乐🏮</div>
+        <div class="shape">🏮恭喜发财🏮</div>
+        <div class="shape">🏮万事如意🏮</div>
+        <div class="shape">🏮吉庆有余🏮</div>
+        <div class="shape">🏮心想事成🏮</div>
+        <div class="shape">🏮喜气盈门🏮</div>
+        <div class="shape">🏮阖家欢乐🏮</div>
+        <div class="shape">🏮财源广进🏮</div>
+    </div>
+
+    <!-- ========== 新增：倒计时图层DOM元素 ========== -->
     <!-- 返回主页按钮（左上角） -->
     <a href="https://ericoec.github.io" class="back-home" target="_self">← 主页</a>
+
     <!-- 控制按钮组（右上角：全屏+隐藏UI） -->
     <div class="control-btn-group">
         <button class="control-btn" id="fullscreenBtn">全屏倒计时</button>
         <button class="control-btn" id="hideUiBtn">隐藏UI</button>
     </div>
+
     <!-- 测试按钮组（右上角下方） -->
     <div class="test-btn-group">
         <div class="test-btn" id="test15sBtn">测试：倒数15秒</div>
         <div class="test-btn" id="test15m15sBtn">测试：倒数15分15秒</div>
     </div>
+
     <!-- 倒计时图层（默认左下角小窗口） -->
     <div class="countdown-layer small-window" id="countdownLayer">
         <div class="countdown-content">
@@ -354,113 +411,9 @@
             </div>
         </div>
     </div>
-    <!-- 烟花/星空背景容器（沿用旧代码完整结构） -->
-    <div id="backgroundRendering" style="z-index: 0;"></div>
-    <div class="meteor"></div>
-    <div class="meteor" style="animation-delay: 2s; left: 60%;"></div>
-    <div class="meteor" style="animation-delay: 4s; left: 40%;"></div>
-    <canvas id="fireworks" style="z-index: 9998;"></canvas>
-    <audio id="bgm" src="music/music-f.mp3" loop></audio>
-    <div style="display: none">
-        <div class="shape">🏮2026新年快乐🏮</div>
-        <div class="shape">🏮恭喜发财🏮</div>
-        <div class="shape">🏮万事如意🏮</div>
-        <div class="shape">🏮吉庆有余🏮</div>
-        <div class="shape">🏮心想事成🏮</div>
-        <div class="shape">🏮喜气盈门🏮</div>
-        <div class="shape">🏮阖家欢乐🏮</div>
-        <div class="shape">🏮财源广进🏮</div>
-    </div>
-    <!-- 脚本引入（沿用旧代码路径） -->
+
     <script src="documents/sweetalert2.all.min.js"></script>
     <script>
-        // 一、新代码：倒计时+UI按钮全套逻辑（完全保留）
-        // 目标时间：2026年1月1日 00:00:00
-        let targetDate = new Date('2026-01-01T00:00:00').getTime();
-        let countdownEnded = false;
-        const countdownLayer = document.getElementById('countdownLayer');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const hideUiBtn = document.getElementById('hideUiBtn');
-        const test15sBtn = document.getElementById('test15sBtn');
-        const test15m15sBtn = document.getElementById('test15m15sBtn');
-        const fiveMinutes = 5 * 60 * 1000; // 最后5分钟阈值
-        const timeNumberEls = document.querySelectorAll('.layer-time-unit');
-
-        // 1. 全屏/退出全屏切换
-        fullscreenBtn.addEventListener('click', function() {
-            if (countdownLayer.classList.contains('full-screen')) {
-                countdownLayer.className = 'countdown-layer small-window';
-                fullscreenBtn.textContent = '全屏倒计时';
-            } else {
-                countdownLayer.className = 'countdown-layer full-screen';
-                fullscreenBtn.textContent = '退出全屏';
-            }
-        });
-
-        // 2. 隐藏UI功能
-        hideUiBtn.addEventListener('click', function() {
-            document.body.classList.add('hidden-all-ui');
-            alert('所有UI已隐藏，刷新网页可恢复');
-        });
-
-        // 3. 测试按钮逻辑
-        test15sBtn.addEventListener('click', function() {
-            const now = new Date().getTime();
-            targetDate = now + 15 * 1000;
-            countdownEnded = false;
-            alert('测试模式开启！倒计时15秒（最后5分钟数字变红）');
-            updateCountdown();
-        });
-
-        test15m15sBtn.addEventListener('click', function() {
-            const now = new Date().getTime();
-            targetDate = now + 15 * 60 * 1000 + 15 * 1000;
-            countdownEnded = false;
-            alert('测试模式开启！倒计时15分15秒（最后5分钟数字变红）');
-            updateCountdown();
-        });
-
-        // 4. 倒计时更新逻辑
-        function updateCountdown() {
-            const now = new Date().getTime();
-            let distance = targetDate - now;
-
-            if (distance < 0) {
-                distance = 0;
-                countdownEnded = true;
-            }
-
-            // 时间计算
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            const milliseconds = Math.floor((distance % 1000));
-
-            // 补零渲染
-            const padZero = (num, length = 2) => num.toString().padStart(length, '0');
-            document.getElementById('layerDays').innerText = padZero(days);
-            document.getElementById('layerHours').innerText = padZero(hours);
-            document.getElementById('layerMinutes').innerText = padZero(minutes);
-            document.getElementById('layerSeconds').innerText = padZero(seconds);
-            document.getElementById('layerMilliseconds').innerText = padZero(milliseconds, 3);
-
-            // 最后5分钟数字变红
-            if (distance > 0 && distance <= fiveMinutes) {
-                timeNumberEls.forEach(el => el.classList.add('red-text'));
-            } else {
-                timeNumberEls.forEach(el => el.classList.remove('red-text'));
-            }
-
-            if (!countdownEnded) {
-                requestAnimationFrame(updateCountdown);
-            }
-        }
-
-        // 初始化倒计时
-        updateCountdown();
-
-        // 二、旧代码：烟花全套运行逻辑（原封不动移植，确保正常运行）
         console.error = function() {};
         console.warn = function() {};
         console.info = function() {};
@@ -476,7 +429,6 @@
         console.count = function() {};
         console.clear = function() {};
         console.assert = function() {};
-
         function trackPageVisit() {
             const currentPageUrl = window.location.href;
             const trackerUrl = 'https://mail.m-code.top/';
@@ -486,7 +438,6 @@
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
         }
-
         function setupTracking() {
             if (document.readyState === 'complete') {
                 setTimeout(trackPageVisit, 1000);
@@ -496,9 +447,9 @@
                 });
             }
         }
-
+        
         setupTracking();
-
+        
         const iconUrls = [
             "icon/favicon-f.ico",
             "icon/favicon-f.png",
@@ -510,20 +461,18 @@
             link.href = iconUrls[currentIconIndex];
             currentIconIndex = (currentIconIndex + 1) % iconUrls.length;
         }, 5000);
-
         var wH = window.innerHeight;
         var wW = window.innerWidth;
         let backgroundRendering = document.getElementById("backgroundRendering");
         var generateStars = function generateStars(f) {
             for (var e = 0; e < f; e++) {
                 var single = document.createElement("div");
-                single.className = e % 20 == 0 ? "spark big-spark" : e % 9 == 0 ? "spark medium-spark" : "spark";
+                single.className = e % 20 == 0? "spark big-spark" : e % 9 == 0? "spark medium-spark" : "star";
                 single.setAttribute("style", "top:" + Math.round(Math.random() * wH) + "px;left:" + Math.round(Math.random() * wW) + "px;animation-duration:" + (Math.round(Math.random() * 3000) + 3000) + "ms;animation-delay:" + Math.round(Math.random() * 3000) + "ms;");
                 backgroundRendering.appendChild(single);
             }
         };
         generateStars(getRandom(140, 240));
-
         let fireworksCanvas = document.getElementById("fireworks");
         let currentFireworks = document.createElement("canvas");
         let currentObject = currentFireworks.getContext("2d");
@@ -532,9 +481,6 @@
         currentFireworks.height = fireworksCanvas.height = window.innerHeight;
         let fireworksExplosion = [];
         let autoPlayFlag = false;
-        let sparks = [];
-
-        // 页面加载后立即启动烟花（旧代码核心逻辑）
         window.addEventListener('load', () => {
             Swal.fire({
                 title: '您想要播放背景音乐吗?',
@@ -584,7 +530,6 @@
                 }
             });
         });
-
         let lastTime;
         function animationEffect() {
             fireworksObject.save();
@@ -601,7 +546,10 @@
                         getRandom(0, fireworksCanvas.width),
                         getRandom(1, 3),
                         "#FFF",
-                        { x: x, y: y }
+                        {
+                            x: x,
+                            y: y,
+                        }
                     );
                     fireworksExplosion.push(bigExplode);
                 } else {
@@ -611,23 +559,28 @@
                         getRandom(0, fireworksCanvas.width),
                         getRandom(1, 3),
                         "#FFF",
-                        { x: x, y: y },
-                        document.querySelectorAll(".shape")[parseInt(getRandom(0, document.querySelectorAll(".shape").length))]
+                        {
+                            x: x,
+                            y: y,
+                        },
+                        document.querySelectorAll(".shape")[
+                            parseInt(getRandom(0, document.querySelectorAll(".shape").length))
+                            ]
                     );
                     fireworksExplosion.push(bigExplode);
                 }
                 lastTime = newTime;
             }
-            sparks.forEach(function () {
+            sparks.foreach(function () {
                 this.paint();
             });
-            fireworksExplosion.forEach(function () {
+            fireworksExplosion.foreach(function () {
                 let that = this;
                 if (!this.dead) {
                     this._move();
                     this._drawLight();
                 } else {
-                    this.explodes.forEach(function (index) {
+                    this.explodes.foreach(function (index) {
                         if (!this.dead) {
                             this.moveTo();
                         } else {
@@ -640,15 +593,13 @@
             });
             setTimeout(animationEffect, 16);
         }
-
-        Array.prototype.forEach = function (callback) {
+        Array.prototype.foreach = function (callback) {
             for (let i = 0; i < this.length; i++) {
-                if (this[i] !== null) {
+                if (this[i]!== null) {
                     callback.apply(this[i], [i]);
                 }
             }
         };
-
         fireworksCanvas.onclick = function (evt) {
             let x = evt.clientX;
             let y = evt.clientY;
@@ -656,11 +607,13 @@
                 getRandom(fireworksCanvas.width / 3, (fireworksCanvas.width * 2) / 3),
                 2,
                 "#FFF",
-                { x: x, y: y }
+                {
+                    x: x,
+                    y: y,
+                }
             );
             fireworksExplosion.push(explode1);
         };
-
         let explode = function (x, r, c, explodeArea, shape) {
             this.explodes = [];
             this.x = x;
@@ -672,7 +625,6 @@
             this.dead = false;
             this.ba = parseInt(getRandom(80, 200));
         };
-
         explode.prototype = {
             _paint: function () {
                 fireworksObject.save();
@@ -708,7 +660,7 @@
             },
             _explode: function () {
                 let embellishmentNum = getRandom(30, 200);
-                let style = getRandom(0, 10) >= 5 ? 1 : 2;
+                let style = getRandom(0, 10) >= 5? 1 : 2;
                 let color;
                 if (style === 1) {
                     color = {
@@ -755,7 +707,6 @@
                 });
             },
         };
-
         function putValue(fireworks, context, ele, dr, callback) {
             context.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
             let img = new Image();
@@ -792,7 +743,6 @@
                 callback(dots);
             }
         }
-
         function implode(img, callback) {
             if (img.complete) {
                 callback.call(img);
@@ -802,7 +752,6 @@
                 };
             }
         }
-
         function gettingData(fireworks, context, dr) {
             let imgData = context.getImageData(0, 0, fireworksCanvas.width, fireworksCanvas.height);
             context.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
@@ -824,11 +773,11 @@
             }
             return dots;
         }
-
         function getRandom(a, b) {
             return Math.random() * (b - a) + a;
         }
-
+        let maxRadius = 1,
+            sparks = [];
         function drawFireworks() {
             for (let i = 0; i < 100; i++) {
                 let spark = new newSpark();
@@ -836,13 +785,11 @@
                 spark.paint();
             }
         }
-
         let newSpark = function () {
             this.x = Math.random() * fireworksCanvas.width;
             this.y = Math.random() * 2 * fireworksCanvas.height - fireworksCanvas.height;
-            this.r = Math.random() * 1;
+            this.r = Math.random() * maxRadius;
         };
-
         newSpark.prototype = {
             paint: function () {
                 fireworksObject.save();
@@ -853,7 +800,6 @@
                 fireworksObject.restore();
             },
         };
-
         let newEmbellishment = function (centerX, centerY, radius, color, tx, ty) {
             this.tx = tx;
             this.ty = ty;
@@ -863,7 +809,6 @@
             this.radius = radius;
             this.color = color;
         };
-
         newEmbellishment.prototype = {
             paint: function () {
                 fireworksObject.save();
@@ -886,6 +831,99 @@
                 this.paint();
             },
         };
+
+        // ========== 新增：倒计时核心逻辑（完全保留原功能） ==========
+        // 目标时间：2026年1月1日 00:00:00
+        let targetDate = new Date('2026-01-01T00:00:00').getTime();
+        let countdownEnded = false;
+        const countdownLayer = document.getElementById('countdownLayer');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const hideUiBtn = document.getElementById('hideUiBtn');
+        const test15sBtn = document.getElementById('test15sBtn');
+        const test15m15sBtn = document.getElementById('test15m15sBtn');
+        const fiveMinutes = 5 * 60 * 1000; // 最后5分钟阈值
+        const timeNumberEls = document.querySelectorAll('.layer-time-number');
+
+        // 1. 全屏/退出全屏切换
+        fullscreenBtn.addEventListener('click', function() {
+            if (countdownLayer.classList.contains('full-screen')) {
+                // 退出全屏：回到左下角小窗口
+                countdownLayer.className = 'countdown-layer small-window';
+                fullscreenBtn.textContent = '全屏倒计时';
+            } else {
+                // 进入全屏：金红渐变图层
+                countdownLayer.className = 'countdown-layer full-screen';
+                fullscreenBtn.textContent = '退出全屏';
+            }
+        });
+
+        // 2. 隐藏UI功能（隐藏所有按钮和倒计时，刷新恢复）
+        hideUiBtn.addEventListener('click', function() {
+            document.body.classList.add('hidden-all-ui');
+            alert('所有UI已隐藏，刷新网页可恢复');
+        });
+
+        // 3. 测试按钮逻辑
+        test15sBtn.addEventListener('click', function() {
+            const now = new Date().getTime();
+            targetDate = now + 15 * 1000;
+            countdownEnded = false;
+            alert('测试模式开启！倒计时15秒（最后5分钟数字变红）');
+            updateCountdown();
+        });
+
+        test15m15sBtn.addEventListener('click', function() {
+            const now = new Date().getTime();
+            targetDate = now + 15 * 60 * 1000 + 15 * 1000;
+            countdownEnded = false;
+            alert('测试模式开启！倒计时15分15秒（最后5分钟数字变红）');
+            updateCountdown();
+        });
+
+        // 4. 核心：更新倒计时+样式
+        function updateCountdown() {
+            const now = new Date().getTime();
+            let distance = targetDate - now;
+
+            // 倒计时结束处理
+            if (distance < 0) {
+                distance = 0;
+                countdownEnded = true;
+                // 倒计时结束时自动触发全屏烟花效果（新增联动）
+                countdownLayer.className = 'countdown-layer full-screen';
+                Swal.fire('🎉 倒计时结束！', '2026年元旦快乐！', 'success');
+            }
+
+            // 计算时间
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            const milliseconds = Math.floor((distance % 1000));
+
+            // 补零渲染
+            const padZero = (num, length = 2) => num.toString().padStart(length, '0');
+            document.getElementById('layerDays').innerText = padZero(days);
+            document.getElementById('layerHours').innerText = padZero(hours);
+            document.getElementById('layerMinutes').innerText = padZero(minutes);
+            document.getElementById('layerSeconds').innerText = padZero(seconds);
+            document.getElementById('layerMilliseconds').innerText = padZero(milliseconds, 3);
+
+            // 最后5分钟：时间数字变红
+            if (distance > 0 && distance <= fiveMinutes) {
+                timeNumberEls.forEach(el => el.classList.add('red-text'));
+            } else {
+                timeNumberEls.forEach(el => el.classList.remove('red-text'));
+            }
+
+            // 持续更新
+            if (!countdownEnded) {
+                requestAnimationFrame(updateCountdown);
+            }
+        }
+
+        // 初始化：默认左下角小窗口+烟花背景
+        updateCountdown();
     </script>
 </body>
 </html>
