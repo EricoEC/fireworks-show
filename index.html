@@ -37,7 +37,7 @@
             position: fixed;
             top: 20px;
             left: 20px;
-            z z-index: 99999;
+            z-index: 99999; /* 确保在最上层 */
             padding: 10px 20px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 8px;
@@ -131,7 +131,7 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
-        /* 烟花页面容器 - 初始隐藏 */
+        /* 烟花页面容器 - 修复：添加背景色+确保铺满屏幕 */
         #fireworks-container {
             position: fixed;
             top: 0;
@@ -140,6 +140,7 @@
             height: 100vh;
             z-index: 9999;
             display: none;
+            background: #161929; /* 与烟花页面背景一致，覆盖红色渐变 */
         }
 
         @media (max-width: 768px) {
@@ -363,17 +364,17 @@
             document.getElementById('seconds').innerText = padZero(seconds);
             document.getElementById('milliseconds').innerText = padZero(milliseconds, 3);
 
-            // 倒计时结束 - 切换到烟花页面
+            // 倒计时结束 - 切换到烟花页面（PPT式切换）
             if (distance < 0) {
                 countdownEnded = true;
                 clearInterval(timer);
-                // 隐藏倒计时页面元素
+                // 完全隐藏所有倒计时相关元素
                 document.querySelector('.countdown-title').style.display = 'none';
                 document.querySelector('.countdown-container').style.display = 'none';
-                testBtn.style.display = 'none'; // 隐藏测试按钮
-                // 显示烟花页面
+                testBtn.style.display = 'none';
+                // 显示烟花页面（覆盖全屏）
                 fireworksContainer.style.display = 'block';
-                // 初始化烟花效果
+                // 初始化烟花效果（修复语法错误，确保执行）
                 initFireworks();
             }
         }
@@ -382,7 +383,7 @@
         updateCountdown();
         const timer = setInterval(updateCountdown, 1);
 
-        // ===================== 烟花页面原有JS - 原样保留 =====================
+        // ===================== 烟花页面原有JS - 修复语法错误 =====================
         function initFireworks() {
             console.error = function() {};
             console.warn = function() {};
@@ -455,7 +456,7 @@
             // 烟花页面初始化逻辑
             Swal.fire({
                 title: '您想要播放背景音乐吗?',
-                icon: 'warning',
+                icon: 'question', // 改为更贴合的问号图标
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
@@ -647,7 +648,7 @@
                         color = {
                             a: parseInt(getRandom(128, 255)),
                             b: parseInt(getRandom(128, 255)),
-                            c: parseInt(getRandom(128, 255)),
+                            c: parseInt(getRandom(128, 255))
                         };
                     }
                     let fullRange = parseInt(getRandom(300, 400));
@@ -656,7 +657,7 @@
                             color = {
                                 a: parseInt(getRandom(128, 255)),
                                 b: parseInt(getRandom(128, 255)),
-                                c: parseInt(getRandom(128, 255)),
+                                c: parseInt(getRandom(128, 255))
                             };
                         }
                         let a = getRandom(-Math.PI, Math.PI);
@@ -677,7 +678,7 @@
                             color = {
                                 a: dots[i].a,
                                 b: dots[i].b,
-                                                               c: dots[i].c,
+                                c: dots[i].c // 修复：去掉多余逗号，避免JS语法错误
                             };
                             let x = dots[i].x;
                             let y = dots[i].y;
@@ -686,7 +687,7 @@
                             that.explodes.push(embellishment);
                         }
                     });
-                },
+                }
             };
             function putValue(fireworks, context, ele, dr, callback) {
                 context.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
@@ -746,7 +747,7 @@
                                 y: y,
                                 a: imgData.data[i],
                                 b: imgData.data[i + 1],
-                                c: imgData.data[i + 2],
+                                c: imgData.data[i + 2]
                             };
                             dots.push(dot);
                         }
@@ -779,7 +780,7 @@
                     fireworksObject.fillStyle = "rgba(255,255,255," + this.r + ")";
                     fireworksObject.fill();
                     fireworksObject.restore();
-                },
+                }
             };
             let newEmbellishment = function (centerX, centerY, radius, color, tx, ty) {
                 this.tx = tx;
@@ -810,7 +811,7 @@
                         this.dead = true;
                     }
                     this.paint();
-                },
+                }
             };
         }
     </script>
