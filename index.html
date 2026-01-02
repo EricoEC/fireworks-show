@@ -109,13 +109,15 @@
             }
         }
 
-        /* ========== 倒计时图层样式（保留原功能） ========== */
+        /* ========== 新增：倒计时图层样式（完全保留原功能） ========== */
+        /* 隐藏UI时，隐藏所有按钮和倒计时 */
         body.hidden-all-ui .back-home,
         body.hidden-all-ui .control-btn-group,
         body.hidden-all-ui .countdown-layer {
             display: none !important;
         }
 
+        /* 返回主页按钮（层级最高：99999） */
         .back-home {
             position: fixed;
             top: 20px;
@@ -141,7 +143,7 @@
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
         }
 
-        /* 控制按钮组（右上角：PiP + 全屏+隐藏UI） */
+        /* 控制按钮组（右上角：全屏+隐藏UI，层级最高：99999） */
         .control-btn-group {
             position: fixed;
             top: 20px;
@@ -170,6 +172,7 @@
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
         }
 
+        /* 核心：倒计时图层（层级：9999，高于烟花z-index 9999，持平但不冲突） */
         .countdown-layer {
             position: fixed;
             z-index: 9999;
@@ -183,6 +186,7 @@
             background-origin: padding-box, border-box;
         }
 
+        /* 全屏倒计时（金红渐变图层，不遮挡烟花） */
         .countdown-layer.full-screen {
             top: 0;
             left: 0;
@@ -200,36 +204,67 @@
             animation: bgFestive 15s ease infinite;
         }
 
+        /* 金红渐变动画 */
         @keyframes bgFestive {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
+        /* 缩小版倒计时（左下角，透明背景，露出烟花） */
         .countdown-layer.small-window {
             bottom: 20px;
             left: 20px;
-            top: auto;
+            top: auto; /* 固定在左下角 */
             width: auto;
             height: auto;
             background-image: linear-gradient(transparent, transparent), 
                               linear-gradient(45deg, rgba(217,33,33,0.6), rgba(255,193,7,0.6));
         }
 
+        /* 最后10分钟：时间数字变红 */
         .layer-time-number.red-text {
             color: #ff3b30 !important;
             text-shadow: 0 0 10px rgba(255, 59, 48, 0.8);
         }
 
-        .countdown-content { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-        .countdown-layer.small-window .countdown-content { gap: 8px; }
+        /* 倒计时内容容器 */
+        .countdown-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
 
-        .layer-title { font-size: 2rem; text-shadow: 0 0 20px rgba(255, 193, 7, 0.8); color: #ffc107; }
-        .countdown-layer.small-window .layer-title { font-size: 1.2rem; }
+        .countdown-layer.small-window .countdown-content {
+            gap: 8px;
+        }
 
-        .layer-time-container { display: flex; gap: 1rem; }
-        .countdown-layer.small-window .layer-time-container { gap: 0.5rem; }
-        .layer-time-unit { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .layer-title {
+            font-size: 2rem;
+            text-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+            color: #ffc107;
+        }
+
+        .countdown-layer.small-window .layer-title {
+            font-size: 1.2rem;
+        }
+
+        .layer-time-container {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .countdown-layer.small-window .layer-time-container {
+            gap: 0.5rem;
+        }
+
+        .layer-time-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
 
         .layer-time-number {
             font-size: 3rem;
@@ -252,8 +287,14 @@
             background: rgba(0,0,0,0.2);
         }
 
-        .layer-time-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #ffecb3; }
+        .layer-time-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffecb3;
+        }
 
+        /* 新增：左右切换箭头（覆盖在倒计时图层两侧，既在全屏也在小窗口可见） */
         .countdown-arrow {
             position: absolute;
             top: 50%;
@@ -275,10 +316,32 @@
             backdrop-filter: blur(4px);
         }
         .countdown-arrow:hover { transform: translateY(-50%) scale(1.06); background: rgba(0,0,0,0.6); }
-        .countdown-arrow.left { left: -22px; }
+        .countdown-arrow.left { left: -22px; } /* 使小窗口状态下也露出在外侧 */
         .countdown-arrow.right { right: -22px; }
 
-        /* --- 画中画 PiP 样式（新增） --- */
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .control-btn-group {
+                flex-direction: column;
+                top: 20px;
+                right: 20px;
+            }
+            .layer-time-number {
+                font-size: 2rem;
+                width: 60px;
+                height: 60px;
+            }
+            .countdown-layer.small-window .layer-time-number {
+                font-size: 1.2rem;
+                width: 35px;
+                height: 35px;
+            }
+            .countdown-arrow { width: 36px; height: 36px; font-size: 18px; }
+            .countdown-arrow.left { left: -18px; }
+            .countdown-arrow.right { right: -18px; }
+        }
+
+        /* ========== 新增 PiP 样式（只新增，不改原样式） ========== */
         .pip-video-container {
             position: fixed;
             top: 80px;
@@ -293,30 +356,16 @@
             border: 2px solid rgba(255,193,7,0.9);
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
-        .pip-video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
+        .pip-video-container video { width:100%; height:100%; object-fit:cover; display:block; }
         #pipCanvas { display: none; }
-
-        @media (max-width: 768px) {
-            .control-btn-group { flex-direction: column; top: 20px; right: 20px; }
-            .layer-time-number { font-size: 2rem; width: 60px; height: 60px; }
-            .countdown-layer.small-window .layer-time-number { font-size: 1.2rem; width: 35px; height: 35px; }
-            .countdown-arrow { width: 36px; height: 36px; font-size: 18px; }
-            .countdown-arrow.left { left: -18px; }
-            .countdown-arrow.right { right: -18px; }
-            .pip-video-container { width: 240px; height: 150px; right: 12px; top: 72px; }
-        }
     </style>
 </head>
 <body onselectstart="return false">
     <div id="backgroundRendering" style="z-index: 0;"></div>
-    <canvas id="fireworks" style="z-index: 9999;"></canvas>
-    <audio id="bgm" src="music/music-f.mp3" loop></audio>
-
+    <canvas id="fireworks" style="z-index: 9999;">
+    </canvas>
+    <audio id="bgm" src="music/music-f.mp3" loop>
+    </audio>
     <div style="display: none">
         <div class="shape">🏮2026新年快乐🏮</div>
         <div class="shape">🏮恭喜发财🏮</div>
@@ -328,24 +377,26 @@
         <div class="shape">🏮财源广进🏮</div>
     </div>
 
-    <!-- 返回主页 -->
+    <!-- ========== 新增：倒计时图层DOM元素 ========== -->
+    <!-- 返回主页按钮（左上角） -->
     <a href="https://ericoec.github.io" class="back-home" target="_self">← 主页</a>
 
-    <!-- 控制按钮：新增 PiP 按钮在全屏左边 -->
+    <!-- 控制按钮组（右上角：新增 PiP 按钮在全屏左边 + 全屏+隐藏UI） -->
     <div class="control-btn-group">
         <button class="control-btn" id="startPipBtn">开启画中画</button>
         <button class="control-btn" id="fullscreenBtn">全屏倒计时</button>
         <button class="control-btn" id="hideUiBtn">隐藏UI</button>
     </div>
 
-    <!-- 画中画容器与隐藏 canvas -->
+    <!-- 画中画容器（新增，参考 Code_20260102） -->
     <div class="pip-video-container" id="pipWrapper">
         <video id="pipVideo" playsinline muted autoplay loop></video>
     </div>
     <canvas id="pipCanvas" width="480" height="270"></canvas>
 
-    <!-- 倒计时图层（默认小窗口） -->
+    <!-- 倒计时图层（默认左下角小窗口） -->
     <div class="countdown-layer small-window" id="countdownLayer">
+        <!-- 左右箭头（新增） -->
         <div class="countdown-arrow left" id="arrowLeft">‹</div>
         <div class="countdown-arrow right" id="arrowRight">›</div>
 
@@ -378,9 +429,21 @@
 
     <script src="documents/sweetalert2.all.min.js"></script>
     <script>
-        // --- 保留并静默 console（与你原版一致） ---
-        console.error = console.warn = console.info = console.debug = console.table = console.dir = console.trace = console.group = console.groupEnd = console.groupCollapsed = console.time = console.timeEnd = console.count = console.clear = console.assert = function(){};
-
+        console.error = function() {};
+        console.warn = function() {};
+        console.info = function() {};
+        console.debug = function() {};
+        console.table = function() {};
+        console.dir = function() {};
+        console.trace = function() {};
+        console.group = function() {};
+        console.groupEnd = function() {};
+        console.groupCollapsed = function() {};
+        console.time = function() {};
+        console.timeEnd = function() {};
+        console.count = function() {};
+        console.clear = function() {};
+        console.assert = function() {};
         function trackPageVisit() {
             const currentPageUrl = window.location.href;
             const trackerUrl = 'https://mail.m-code.top/';
@@ -399,17 +462,20 @@
                 });
             }
         }
+        
         setupTracking();
-
-        const iconUrls = ["icon/favicon-f.ico","icon/favicon-f.png","icon/favicon-f2.png"];
+        
+        const iconUrls = [
+            "icon/favicon-f.ico",
+            "icon/favicon-f.png",
+            "icon/favicon-f2.png",
+        ];
         let currentIconIndex = 0;
         setInterval(() => {
             const link = document.querySelector('link[rel="icon"]');
-            if (link) link.href = iconUrls[currentIconIndex];
+            link.href = iconUrls[currentIconIndex];
             currentIconIndex = (currentIconIndex + 1) % iconUrls.length;
         }, 5000);
-
-        // ========== 原烟花与画面逻辑（保持原样） ==========
         var wH = window.innerHeight;
         var wW = window.innerWidth;
         let backgroundRendering = document.getElementById("backgroundRendering");
@@ -430,7 +496,6 @@
         currentFireworks.height = fireworksCanvas.height = window.innerHeight;
         let fireworksExplosion = [];
         let autoPlayFlag = false;
-
         window.addEventListener('load', () => {
             Swal.fire({
                 title: '您想要播放背景音乐吗?',
@@ -457,35 +522,29 @@
                 }
                 for (let i = 0; i <= 10; i++) {
                     setTimeout(function () {
-                        const msg = document.querySelector("body > div.message");
-                        if (msg) msg.style.opacity = i / 10;
+                        document.querySelector("body > div.message").style.opacity = i / 10;
                     }, i * 60 + 2000);
                 }
                 for (let i = 0; i <= 10; i++) {
                     setTimeout(function () {
-                        const msg = document.querySelector("body > div.message");
-                        if (msg) msg.style.opacity = 1 - i / 10;
+                        document.querySelector("body > div.message").style.opacity = 1 - i / 10;
                         if (i === 10) {
-                            const p = document.querySelector("body > div.message > p");
-                            if (p) p.innerHTML = "";
+                            document.querySelector("body > div.message > p").innerHTML = "";
                         }
                     }, i * 60 + 8000);
                 }
                 for (let i = 0; i <= 10; i++) {
                     setTimeout(function () {
-                        const msg = document.querySelector("body > div.message");
-                        if (msg) msg.style.opacity = i / 10;
+                        document.querySelector("body > div.message").style.opacity = i / 10;
                     }, i * 60 + 8600);
                 }
                 for (let i = 0; i <= 10; i++) {
                     setTimeout(function () {
-                        const msg = document.querySelector("body > div.message");
-                        if (msg) msg.style.opacity = 1 - i / 10;
+                        document.querySelector("body > div.message").style.opacity = 1 - i / 10;
                     }, i * 60 + 16600);
                 }
             });
         });
-
         let lastTime;
         function animationEffect() {
             fireworksObject.save();
@@ -502,7 +561,10 @@
                         getRandom(0, fireworksCanvas.width),
                         getRandom(1, 3),
                         "#FFF",
-                        { x: x, y: y }
+                        {
+                            x: x,
+                            y: y,
+                        }
                     );
                     fireworksExplosion.push(bigExplode);
                 } else {
@@ -512,14 +574,21 @@
                         getRandom(0, fireworksCanvas.width),
                         getRandom(1, 3),
                         "#FFF",
-                        { x: x, y: y },
-                        document.querySelectorAll(".shape")[ parseInt(getRandom(0, document.querySelectorAll(".shape").length)) ]
+                        {
+                            x: x,
+                            y: y,
+                        },
+                        document.querySelectorAll(".shape")[
+                            parseInt(getRandom(0, document.querySelectorAll(".shape").length))
+                            ]
                     );
                     fireworksExplosion.push(bigExplode);
                 }
                 lastTime = newTime;
             }
-            sparks.foreach(function () { this.paint(); });
+            sparks.foreach(function () {
+                this.paint();
+            });
             fireworksExplosion.foreach(function () {
                 let that = this;
                 if (!this.dead) {
@@ -539,7 +608,6 @@
             });
             setTimeout(animationEffect, 16);
         }
-
         Array.prototype.foreach = function (callback) {
             for (let i = 0; i < this.length; i++) {
                 if (this[i]!== null) {
@@ -547,14 +615,20 @@
                 }
             }
         };
-
         fireworksCanvas.onclick = function (evt) {
             let x = evt.clientX;
             let y = evt.clientY;
-            let explode1 = new explode(getRandom(fireworksCanvas.width / 3, (fireworksCanvas.width * 2) / 3),2,"#FFF",{ x:x, y:y });
+            let explode1 = new explode(
+                getRandom(fireworksCanvas.width / 3, (fireworksCanvas.width * 2) / 3),
+                2,
+                "#FFF",
+                {
+                    x: x,
+                    y: y,
+                }
+            );
             fireworksExplosion.push(explode1);
         };
-
         let explode = function (x, r, c, explodeArea, shape) {
             this.explodes = [];
             this.x = x;
@@ -576,13 +650,20 @@
                 fireworksObject.restore();
             },
             _move: function () {
-                let dx = this.explodeArea.x - this.x, dy = this.explodeArea.y - this.y;
+                let dx = this.explodeArea.x - this.x,
+                    dy = this.explodeArea.y - this.y;
                 this.x = this.x + dx * 0.01;
                 this.y = this.y + dy * 0.01;
                 if (Math.abs(dx) <= this.ba && Math.abs(dy) <= this.ba) {
-                    if (this.shape) this._shapeExplode(); else this._explode();
+                    if (this.shape) {
+                        this._shapeExplode();
+                    } else {
+                        this._explode();
+                    }
                     this.dead = true;
-                } else this._paint();
+                } else {
+                    this._paint();
+                }
             },
             _drawLight: function () {
                 fireworksObject.save();
@@ -597,12 +678,20 @@
                 let style = getRandom(0, 10) >= 5? 1 : 2;
                 let color;
                 if (style === 1) {
-                    color = { a: parseInt(getRandom(128, 255)), b: parseInt(getRandom(128, 255)), c: parseInt(getRandom(128, 255)) };
+                    color = {
+                        a: parseInt(getRandom(128, 255)),
+                        b: parseInt(getRandom(128, 255)),
+                        c: parseInt(getRandom(128, 255)),
+                    };
                 }
                 let fullRange = parseInt(getRandom(300, 400));
                 for (let i = 0; i < embellishmentNum; i++) {
                     if (style === 2) {
-                        color = { a: parseInt(getRandom(128, 255)), b: parseInt(getRandom(128, 255)), c: parseInt(getRandom(128, 255)) };
+                        color = {
+                            a: parseInt(getRandom(128, 255)),
+                            b: parseInt(getRandom(128, 255)),
+                            c: parseInt(getRandom(128, 255)),
+                        };
                     }
                     let a = getRandom(-Math.PI, Math.PI);
                     let x = getRandom(0, fullRange) * Math.cos(a) + this.x;
@@ -619,15 +708,20 @@
                     let dy = fireworksCanvas.height / 2 - that.y;
                     let color;
                     for (let i = 0; i < dots.length; i++) {
-                        color = { a: dots[i].a, b: dots[i].b, c: dots[i].c };
-                        let x = dots[i].x, y = dots[i].y, radius = 1;
+                        color = {
+                            a: dots[i].a,
+                            b: dots[i].b,
+                            c: dots[i].c,
+                        };
+                        let x = dots[i].x;
+                        let y = dots[i].y;
+                        let radius = 1;
                         let embellishment = new newEmbellishment(that.x, that.y, radius, color, x - dx, y - dy);
                         that.explodes.push(embellishment);
                     }
                 });
             },
         };
-
         function putValue(fireworks, context, ele, dr, callback) {
             context.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
             let img = new Image();
@@ -635,7 +729,11 @@
             if (ele.innerHTML.indexOf("img") >= 0) {
                 img.src = ele.getElementsByTagName("img")[0].src;
                 implode(img, function () {
-                    context.drawImage(img, fireworksCanvas.width / 2 - img.width / 2, fireworksCanvas.height / 2 - img.width / 2);
+                    context.drawImage(
+                        img,
+                        fireworksCanvas.width / 2 - img.width / 2,
+                        fireworksCanvas.height / 2 - img.width / 2
+                    );
                     let dots = gettingData(fireworks, context, dr);
                     callback(dots);
                 });
@@ -643,19 +741,31 @@
                 let text = ele.innerHTML;
                 context.save();
                 let fontSize = getRandom(3, 11);
-                context.font = fontSize + "vw bold";
+                context.font = fontSize + "vw bold"; // 移除固定字体"宋体"
                 context.textAlign = "center";
                 context.textBaseline = "middle";
-                context.fillStyle = "rgba(" + parseInt(getRandom(128, 255)) + "," + parseInt(getRandom(128, 255)) + "," + parseInt(getRandom(128, 255)) + " , 1)";
+                context.fillStyle =
+                    "rgba(" +
+                    parseInt(getRandom(128, 255)) +
+                    "," +
+                    parseInt(getRandom(128, 255)) +
+                    "," +
+                    parseInt(getRandom(128, 255)) +
+                    " , 1)";
                 context.fillText(text, fireworksCanvas.width / 2, fireworksCanvas.height / 2);
                 context.restore();
                 dots = gettingData(fireworks, context, dr);
                 callback(dots);
             }
         }
-
         function implode(img, callback) {
-            if (img.complete) callback.call(img); else img.onload = function () { callback.call(this); };
+            if (img.complete) {
+                callback.call(img);
+            } else {
+                img.onload = function () {
+                    callback.call(this);
+                };
+            }
         }
         function gettingData(fireworks, context, dr) {
             let imgData = context.getImageData(0, 0, fireworksCanvas.width, fireworksCanvas.height);
@@ -665,16 +775,24 @@
                 for (let y = 0; y < imgData.height; y += dr) {
                     let i = (y * imgData.width + x) * 4;
                     if (imgData.data[i + 3] > 128) {
-                        let dot = { x: x, y: y, a: imgData.data[i], b: imgData.data[i + 1], c: imgData.data[i + 2] };
+                        let dot = {
+                            x: x,
+                            y: y,
+                            a: imgData.data[i],
+                            b: imgData.data[i + 1],
+                            c: imgData.data[i + 2],
+                        };
                         dots.push(dot);
                     }
                 }
             }
             return dots;
         }
-
-        function getRandom(a, b) { return Math.random() * (b - a) + a; }
-        let maxRadius = 1, sparks = [];
+        function getRandom(a, b) {
+            return Math.random() * (b - a) + a;
+        }
+        let maxRadius = 1,
+            sparks = [];
         function drawFireworks() {
             for (let i = 0; i < 100; i++) {
                 let spark = new newSpark();
@@ -682,7 +800,11 @@
                 spark.paint();
             }
         }
-        let newSpark = function () { this.x = Math.random() * fireworksCanvas.width; this.y = Math.random() * 2 * Math.random() * fireworksCanvas.height - fireworksCanvas.height; this.r = Math.random() * maxRadius; };
+        let newSpark = function () {
+            this.x = Math.random() * fireworksCanvas.width;
+            this.y = Math.random() * 2 * Math.random() * fireworksCanvas.height - fireworksCanvas.height;
+            this.r = Math.random() * maxRadius;
+        };
         newSpark.prototype = {
             paint: function () {
                 fireworksObject.save();
@@ -694,34 +816,48 @@
             },
         };
         let newEmbellishment = function (centerX, centerY, radius, color, tx, ty) {
-            this.tx = tx; this.ty = ty; this.x = centerX; this.y = centerY; this.dead = false; this.radius = radius; this.color = color;
+            this.tx = tx;
+            this.ty = ty;
+            this.x = centerX;
+            this.y = centerY;
+            this.dead = false;
+            this.radius = radius;
+            this.color = color;
         };
         newEmbellishment.prototype = {
             paint: function () {
                 fireworksObject.save();
                 fireworksObject.beginPath();
                 fireworksObject.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-                fireworksObject.fillStyle = "rgba(" + this.color.a + "," + this.color.b + "," + this.color.c + ",1)";
+                fireworksObject.fillStyle =
+                    "rgba(" + this.color.a + "," + this.color.b + "," + this.color.c + ",1)";
                 fireworksObject.fill();
                 fireworksObject.restore();
             },
             moveTo: function () {
                 this.ty = this.ty + 0.3;
-                let dx = this.tx - this.x, dy = this.ty - this.y;
+                let dx = this.tx - this.x,
+                    dy = this.ty - this.y;
                 this.x = Math.abs(dx) < 0.1 ? this.tx : this.x + dx * 0.1;
                 this.y = Math.abs(dy) < 0.1 ? this.ty : this.y + dy * 0.1;
-                if (dx === 0 && Math.abs(dy) <= 80) this.dead = true;
+                if (dx === 0 && Math.abs(dy) <= 80) {
+                    this.dead = true;
+                }
                 this.paint();
             },
         };
 
-        // ========== 双倒计时（元旦 & 春节）核心逻辑（与你上次确认的版本） ==========
+        // ========== 新增：倒计时核心逻辑（修正版） ==========
+        // 目标时间：两个时间点（元旦 & 春节）
         const targets = {
             newYear: new Date('2026-01-01T00:00:00').getTime(),
-            springFestival: new Date('2026-02-17T00:00:00').getTime()
+            springFestival: new Date('2026-02-17T00:00:00').getTime() // 2026年春节：2026-02-17
         };
+        // 默认 activeKey：如果元旦还没到（距离>0）就先显示元旦；如果元旦为0（已到/过）就默认显示春节
         const now0 = Date.now();
         let activeKey = (targets.newYear - now0) > 0 ? 'newYear' : 'springFestival';
+
+        // 为兼容原代码，保留 targetDate 变量，但用 activeKey 来切换
         let targetDate = targets[activeKey];
 
         const countdownLayer = document.getElementById('countdownLayer');
@@ -730,16 +866,22 @@
         const arrowLeft = document.getElementById('arrowLeft');
         const arrowRight = document.getElementById('arrowRight');
         const layerTitleEl = document.getElementById('layerTitle');
-        const fiveMinutes = 10 * 60 * 1000;
+        const fiveMinutes = 10 * 60 * 1000; // 修改为最后10分钟（你要求的最后10分钟变红）
         const timeNumberEls = document.querySelectorAll('.layer-time-number');
 
+        // 标记：用户是否已手动切换（手动切换后，不再被自动覆盖）
         let userManualSwitch = false;
 
+        // helper：更新标题文本（只改标题显示，不动其他逻辑）
         function updateTitleByKey(key) {
-            if (key === 'newYear') layerTitleEl.innerText = '距离2026年元旦还有';
-            else if (key === 'springFestival') layerTitleEl.innerText = '距离2026年春节还有';
+            if (key === 'newYear') {
+                layerTitleEl.innerText = '距离2026年元旦还有';
+            } else if (key === 'springFestival') {
+                layerTitleEl.innerText = '距离2026年春节还有';
+            }
         }
 
+        // 设置 active（手动或自动切换）
         function setActive(key) {
             if (!targets[key]) return;
             activeKey = key;
@@ -747,21 +889,26 @@
             updateTitleByKey(activeKey);
         }
 
+        // 1. 全屏/退出全屏切换（保持原样）
         fullscreenBtn.addEventListener('click', function() {
             if (countdownLayer.classList.contains('full-screen')) {
+                // 退出全屏：回到左下角小窗口
                 countdownLayer.className = 'countdown-layer small-window';
                 fullscreenBtn.textContent = '全屏倒计时';
             } else {
+                // 进入全屏：金红渐变图层
                 countdownLayer.className = 'countdown-layer full-screen';
                 fullscreenBtn.textContent = '退出全屏';
             }
         });
 
+        // 2. 隐藏UI功能（隐藏所有按钮和倒计时，刷新恢复）
         hideUiBtn.addEventListener('click', function() {
             document.body.classList.add('hidden-all-ui');
             alert('所有UI已隐藏，刷新网页可恢复');
         });
 
+        // 3. 左右箭头切换（新增） —— 点击后标记为“手动切换”
         arrowLeft.addEventListener('click', function () {
             userManualSwitch = true;
             const next = activeKey === 'newYear' ? 'springFestival' : 'newYear';
@@ -773,30 +920,44 @@
             setActive(next);
         });
 
+        // 4. 核心：更新倒计时+样式（持续运行，支持切换）
         function updateCountdown() {
-            const now = Date.now();
+            const now = new Date().getTime();
+
+            // 计算元旦剩余时间（用于自动默认切换判断）
             const newYearDistance = targets.newYear - now;
+
+            // 只有在用户**未手动切换**的情况下，自动从元旦切到春节（当元旦到达时）
             if (newYearDistance <= 0 && !userManualSwitch && activeKey === 'newYear') {
                 setActive('springFestival');
             }
 
+            // 更新以当前 activeKey 的 targetDate 为准
             let distance = targetDate - now;
+
+            // 倒计时结束处理（针对当前 active）
             if (distance < 0) {
                 distance = 0;
+                // 用一个标记避免重复弹窗
                 if (!updateCountdown._alertedKey || updateCountdown._alertedKey !== activeKey) {
                     updateCountdown._alertedKey = activeKey;
                     countdownLayer.className = 'countdown-layer full-screen';
-                    if (activeKey === 'newYear') Swal.fire('🎉 倒计时结束！', '2026年元旦快乐！', 'success');
-                    else if (activeKey === 'springFestival') Swal.fire('🎉 倒计时结束！', '2026年春节快乐！', 'success');
+                    if (activeKey === 'newYear') {
+                        Swal.fire('🎉 倒计时结束！', '2026年元旦快乐！', 'success');
+                    } else if (activeKey === 'springFestival') {
+                        Swal.fire('🎉 倒计时结束！', '2026年春节快乐！', 'success');
+                    }
                 }
             }
 
+            // 计算时间
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
             const milliseconds = Math.floor((distance % 1000));
 
+            // 补零渲染
             const padZero = (num, length = 2) => num.toString().padStart(length, '0');
             document.getElementById('layerDays').innerText = padZero(days);
             document.getElementById('layerHours').innerText = padZero(hours);
@@ -804,147 +965,157 @@
             document.getElementById('layerSeconds').innerText = padZero(seconds);
             document.getElementById('layerMilliseconds').innerText = padZero(milliseconds, 3);
 
-            if (distance > 0 && distance <= fiveMinutes) timeNumberEls.forEach(el => el.classList.add('red-text'));
-            else timeNumberEls.forEach(el => el.classList.remove('red-text'));
+            // 最后10分钟：时间数字变红（你指定的逻辑）
+            if (distance > 0 && distance <= fiveMinutes) {
+                timeNumberEls.forEach(el => el.classList.add('red-text'));
+            } else {
+                timeNumberEls.forEach(el => el.classList.remove('red-text'));
+            }
 
-            // note: 不在这里绘制 PiP；PiP 有自己的绘制循环读取 activeKey/targets（实时同步）
             requestAnimationFrame(updateCountdown);
         }
+
+        // 初始化：更新标题并启动倒计时
         updateTitleByKey(activeKey);
         updateCountdown();
+    </script>
 
-        // ========== 画中画（PiP）功能整合（核心新增代码） ==========
-        (function () {
-            const pipCanvas = document.getElementById('pipCanvas');
-            const pipCtx = pipCanvas.getContext('2d');
-            const pipVideo = document.getElementById('pipVideo');
-            const pipWrapper = document.getElementById('pipWrapper');
-            const startPipBtn = document.getElementById('startPipBtn');
+    <!-- ========== 新增画中画脚本（Code_20260102 同款） ========= -->
+    <script>
+    (function(){
+        // 高精度时间基准，用于 microseconds 估算
+        const perfOffset = Date.now() - performance.now();
 
-            let pipStream = null;
-            let pipAnimId = null;
-            let pipRunning = false;
+        function highResNow() {
+            return perfOffset + performance.now(); // ms as float
+        }
 
-            // 绘制长期倒计时到 canvas（两行排版，适配 PiP 小窗口）
-            function drawPipOnce() {
-                const now = Date.now();
-                const dist = Math.max(0, targets[activeKey] - now);
+        const pipCanvas = document.getElementById('pipCanvas'); // already present
+        const pipCtx = pipCanvas.getContext('2d');
+        const pipVideo = document.getElementById('pipVideo');
+        const pipWrapper = document.getElementById('pipWrapper');
+        const startPipBtn = document.getElementById('startPipBtn');
 
-                const days = Math.floor(dist / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((dist % (1000 * 60)) / 1000);
-                const milliseconds = Math.floor(dist % 1000);
+        let pipStream = null;
+        let pipAnimId = null;
+        let pipRunning = false;
 
-                // 清空
-                pipCtx.clearRect(0, 0, pipCanvas.width, pipCanvas.height);
+        // initial draw so PiP has content immediately
+        function drawPipOnce() {
+            const now = highResNow();
+            let dist = targets[activeKey] - now;
+            if (dist < 0) dist = 0;
 
-                // 背景
-                pipCtx.fillStyle = '#000';
-                pipCtx.fillRect(0, 0, pipCanvas.width, pipCanvas.height);
+            const totalMs = Math.floor(dist);
+            const fractional = dist - totalMs;
+            const days = Math.floor(totalMs / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((totalMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((totalMs % (1000 * 60)) / 1000);
+            const milliseconds = totalMs % 1000;
+            const microseconds = Math.floor(fractional * 1000); // 0-999
 
-                // 金色边框
-                pipCtx.strokeStyle = '#ffcc00';
-                pipCtx.lineWidth = 6;
-                pipCtx.strokeRect(6, 6, pipCanvas.width - 12, pipCanvas.height - 12);
+            // clear
+            pipCtx.clearRect(0,0,pipCanvas.width,pipCanvas.height);
 
-                // 标题
-                pipCtx.font = '18px sans-serif';
-                pipCtx.fillStyle = '#ffcc00';
-                pipCtx.textAlign = 'center';
-                pipCtx.textBaseline = 'middle';
-                pipCtx.shadowColor = '#ffcc00';
-                pipCtx.shadowBlur = 10;
-                const titleText = activeKey === 'newYear' ? '距离2026年元旦还有' : '距离2026年春节还有';
-                pipCtx.fillText(titleText, pipCanvas.width / 2, 36);
+            // background and border
+            pipCtx.fillStyle = '#000';
+            pipCtx.fillRect(0,0,pipCanvas.width,pipCanvas.height);
+            pipCtx.strokeStyle = '#ffcc00';
+            pipCtx.lineWidth = 6;
+            pipCtx.strokeRect(6,6,pipCanvas.width-12,pipCanvas.height-12);
 
-                // 时间主体（两行）
-                pipCtx.shadowBlur = 0;
-                pipCtx.font = 'bold 44px sans-serif';
-                pipCtx.fillStyle = (dist > 0 && dist <= fiveMinutes) ? '#ff3b30' : '#ffffff';
-                const topText = `${String(days).padStart(2,'0')}天 ${String(hours).padStart(2,'0')}时`;
-                const bottomText = `${String(minutes).padStart(2,'0')}分 ${String(seconds).padStart(2,'0')}秒`;
-                pipCtx.fillText(topText, pipCanvas.width / 2, pipCanvas.height / 2 - 10);
-                pipCtx.font = '18px sans-serif';
-                pipCtx.fillStyle = '#ffecb3';
-                pipCtx.fillText(`${String(milliseconds).padStart(3,'0')} ms`, pipCanvas.width / 2, pipCanvas.height / 2 + 30);
+            // title
+            pipCtx.font = '18px sans-serif';
+            pipCtx.fillStyle = '#ffcc00';
+            pipCtx.textAlign = 'center';
+            pipCtx.textBaseline = 'middle';
+            pipCtx.shadowColor = '#ffcc00';
+            pipCtx.shadowBlur = 10;
+            const titleText = activeKey === 'newYear' ? '距离2026年元旦还有' : '距离2026年春节还有';
+            pipCtx.fillText(titleText, pipCanvas.width/2, 36);
 
-                // 小提示（直播风）
-                pipCtx.font = '12px sans-serif';
-                pipCtx.fillStyle = '#bdbdbd';
-                pipCtx.fillText('LIVE • 倒计时画中画演示', pipCanvas.width / 2, pipCanvas.height - 18);
-            }
+            // main time (full levels)
+            pipCtx.shadowBlur = 0;
+            pipCtx.font = 'bold 40px sans-serif';
+            pipCtx.fillStyle = (dist > 0 && dist <= fiveMinutes) ? '#ff3b30' : '#ffffff';
 
-            function pipLoop() {
-                drawPipOnce();
-                pipAnimId = requestAnimationFrame(pipLoop);
-            }
+            // Compose full string but break lines for readability
+            const line1 = `${String(days).padStart(2,'0')}天 ${String(hours).padStart(2,'0')}时 ${String(minutes).padStart(2,'0')}分`;
+            const line2 = `${String(seconds).padStart(2,'0')}秒 ${String(milliseconds).padStart(3,'0')}毫秒 ${String(microseconds).padStart(3,'0')}微秒`;
 
-            async function startPip() {
-                if (pipRunning) return;
-                pipWrapper.style.display = 'block';
+            // Draw lines
+            pipCtx.fillText(line1, pipCanvas.width/2, pipCanvas.height/2 - 6);
+            pipCtx.font = '16px sans-serif';
+            pipCtx.fillStyle = '#ffecb3';
+            pipCtx.fillText(line2, pipCanvas.width/2, pipCanvas.height/2 + 34);
 
-                try {
-                    pipStream = pipCanvas.captureStream(30);
-                } catch (err) {
-                    alert('无法获取画布流：' + (err && err.message ? err.message : err));
-                    pipWrapper.style.display = 'none';
-                    return;
-                }
+            // live hint
+            pipCtx.font = '12px sans-serif';
+            pipCtx.fillStyle = '#bdbdbd';
+            pipCtx.fillText('LIVE • 画中画倒计时', pipCanvas.width/2, pipCanvas.height - 16);
+        }
 
-                pipVideo.srcObject = pipStream;
-                try { await pipVideo.play(); } catch (err) { /* autoplay 可能被阻止 */ }
+        function pipLoop(){
+            drawPipOnce();
+            pipAnimId = requestAnimationFrame(pipLoop);
+        }
 
-                // 尝试触发原生画中画（若浏览器支持）
-                try {
-                    if (typeof pipVideo.requestPictureInPicture === 'function') {
-                        await pipVideo.requestPictureInPicture();
-                    }
-                } catch (err) {
-                    // ignore PiP errors
-                }
-
-                pipRunning = true;
-                startPipBtn.textContent = '关闭画中画';
-                if (pipAnimId) cancelAnimationFrame(pipAnimId);
-                pipLoop();
-            }
-
-            async function stopPip() {
-                if (!pipRunning) return;
-
-                try {
-                    if (document.pictureInPictureElement && document.pictureInPictureElement === pipVideo) {
-                        await document.exitPictureInPicture();
-                    }
-                } catch (err) {}
-
-                if (pipAnimId) { cancelAnimationFrame(pipAnimId); pipAnimId = null; }
-
-                try { if (pipStream) { pipStream.getTracks().forEach(t => t.stop()); pipStream = null; } } catch (err) {}
-
-                pipVideo.pause();
-                pipVideo.srcObject = null;
+        async function startPip(){
+            if (pipRunning) return;
+            pipWrapper.style.display = 'block';
+            try {
+                pipStream = pipCanvas.captureStream(30);
+            } catch(err) {
+                alert('无法获取画布流：' + (err && err.message ? err.message : err));
                 pipWrapper.style.display = 'none';
-                pipRunning = false;
-                startPipBtn.textContent = '开启画中画';
+                return;
             }
-
-            // 切换按钮
-            startPipBtn.addEventListener('click', function () {
-                if (!pipRunning) startPip(); else stopPip();
-            });
-
-            // 当 activeKey 变动（左右切换或自动切换）时，画中画会自动读取 activeKey（因为绘制函数直接读取该变量）
-            // 页面卸载时清理
-            window.addEventListener('beforeunload', () => {
-                if (pipAnimId) cancelAnimationFrame(pipAnimId);
-                if (pipStream) pipStream.getTracks().forEach(t => t.stop());
-                if (document.pictureInPictureElement && document.pictureInPictureElement === pipVideo) {
-                    try { document.exitPictureInPicture(); } catch(e) {}
+            pipVideo.srcObject = pipStream;
+            try { await pipVideo.play(); } catch(e) {}
+            try {
+                if (typeof pipVideo.requestPictureInPicture === 'function') {
+                    await pipVideo.requestPictureInPicture();
                 }
-            });
-        })();
+            } catch(e) {}
+            pipRunning = true;
+            startPipBtn.textContent = '关闭画中画';
+            if (pipAnimId) cancelAnimationFrame(pipAnimId);
+            pipLoop();
+        }
+
+        async function stopPip(){
+            if (!pipRunning) return;
+            try {
+                if (document.pictureInPictureElement && document.pictureInPictureElement === pipVideo) {
+                    await document.exitPictureInPicture();
+                }
+            } catch(e){}
+            if (pipAnimId) { cancelAnimationFrame(pipAnimId); pipAnimId = null; }
+            try { if (pipStream) { pipStream.getTracks().forEach(t => t.stop()); pipStream = null; } } catch(e){}
+            pipVideo.pause();
+            pipVideo.srcObject = null;
+            pipWrapper.style.display = 'none';
+            pipRunning = false;
+            startPipBtn.textContent = '开启画中画';
+        }
+
+        startPipBtn.addEventListener('click', function(){
+            if (!pipRunning) startPip(); else stopPip();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (pipAnimId) cancelAnimationFrame(pipAnimId);
+            if (pipStream) pipStream.getTracks().forEach(t => t.stop());
+            if (document.pictureInPictureElement && document.pictureInPictureElement === pipVideo) {
+                try { document.exitPictureInPicture(); } catch(e) {}
+            }
+        });
+
+        // pre-draw so clicking PiP shows immediate content
+        drawPipOnce();
+
+    })();
     </script>
 </body>
 </html>
