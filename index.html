@@ -777,7 +777,7 @@
         }
         let newSpark = function () {
             this.x = Math.random() * fireworksCanvas.width;
-            this.y = Math.random() * 2 * fireworksCanvas.height - fireworksCanvas.height;
+            this.y = Math.random() * 2 * Math.random() * fireworksCanvas.height - fireworksCanvas.height;
             this.r = Math.random() * maxRadius;
         };
         newSpark.prototype = {
@@ -822,7 +822,7 @@
             },
         };
 
-        // ========== 新增：倒计时核心逻辑（完全保留原功能） ==========
+        // ========== 新增：倒计时核心逻辑（修正版） ==========
         // 目标时间：两个时间点（元旦 & 春节）
         const targets = {
             newYear: new Date('2026-01-01T00:00:00').getTime(),
@@ -844,6 +844,9 @@
         const fiveMinutes = 10 * 60 * 1000; // 修改为最后10分钟（你要求的最后10分钟变红）
         const timeNumberEls = document.querySelectorAll('.layer-time-number');
 
+        // 标记：用户是否已手动切换（手动切换后，不再被自动覆盖）
+        let userManualSwitch = false;
+
         // helper：更新标题文本（只改标题显示，不动其他逻辑）
         function updateTitleByKey(key) {
             if (key === 'newYear') {
@@ -859,7 +862,6 @@
             activeKey = key;
             targetDate = targets[activeKey];
             updateTitleByKey(activeKey);
-            // 如果切换到已到的计时（distance=0），不要自动触发SweetAlert（保留原逻辑，只有在倒计时真正结束时触发）
         }
 
         // 1. 全屏/退出全屏切换（保持原样）
@@ -881,14 +883,14 @@
             alert('所有UI已隐藏，刷新网页可恢复');
         });
 
-        // 3. 左右箭头切换（新增）
+        // 3. 左右箭头切换（新增） —— 点击后标记为“手动切换”
         arrowLeft.addEventListener('click', function () {
-            // 左箭头 = 切换到上一个（newYear <-> springFestival）
+            userManualSwitch = true;
             const next = activeKey === 'newYear' ? 'springFestival' : 'newYear';
             setActive(next);
         });
         arrowRight.addEventListener('click', function () {
-            // 右箭头 = 切换到下一个（same toggle）
+            userManualSwitch = true;
             const next = activeKey === 'newYear' ? 'springFestival' : 'newYear';
             setActive(next);
         });
@@ -897,12 +899,11 @@
         function updateCountdown() {
             const now = new Date().getTime();
 
-            // 如果当前 activeKey 是 newYear，需要知道 newYear 的状态，以便在元旦过后默认显示春节
+            // 计算元旦剩余时间（用于自动默认切换判断）
             const newYearDistance = targets.newYear - now;
 
-            // 如果 newYear 已结束并且 activeKey 仍是 newYear，则默认切换到春节（按你的要求：元旦为0了，就显示春节）
-            if (newYearDistance <= 0 && activeKey === 'newYear') {
-                // 这里不强制阻止用户手动切回，手动点击箭头仍然可以切换回去查看元旦历史/0
+            // 只有在用户**未手动切换**的情况下，自动从元旦切到春节（当元旦到达时）
+            if (newYearDistance <= 0 && !userManualSwitch && activeKey === 'newYear') {
                 setActive('springFestival');
             }
 
@@ -912,10 +913,8 @@
             // 倒计时结束处理（针对当前 active）
             if (distance < 0) {
                 distance = 0;
-                // 与原逻辑保持一致：当某个倒计时达到 0 时，触发一次弹窗和全屏（但不会停止更新其他计时）
-                // 为避免频繁重复弹窗，我们用一个简单的标记保留上一次触发的 key
+                // 用一个标记避免重复弹窗
                 if (!updateCountdown._alertedKey || updateCountdown._alertedKey !== activeKey) {
-                    // 只有当这个 activeKey 第一次到 0 时触发
                     updateCountdown._alertedKey = activeKey;
                     countdownLayer.className = 'countdown-layer full-screen';
                     if (activeKey === 'newYear') {
@@ -948,7 +947,6 @@
                 timeNumberEls.forEach(el => el.classList.remove('red-text'));
             }
 
-            // 持续更新（不再在某个倒计时结束后停止，因为用户可以切换到另一个倒计时）
             requestAnimationFrame(updateCountdown);
         }
 
