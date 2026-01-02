@@ -222,7 +222,7 @@
                               linear-gradient(45deg, rgba(217,33,33,0.6), rgba(255,193,7,0.6));
         }
 
-        /* 最后5分钟：时间数字变红 */
+        /* 最后10分钟：时间数字变红 */
         .layer-time-number.red-text {
             color: #ff3b30 !important;
             text-shadow: 0 0 10px rgba(255, 59, 48, 0.8);
@@ -294,6 +294,31 @@
             color: #ffecb3;
         }
 
+        /* 新增：左右切换箭头（覆盖在倒计时图层两侧，既在全屏也在小窗口可见） */
+        .countdown-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10000;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.45);
+            border: 1px solid rgba(255,193,7,0.9);
+            color: #fff;
+            cursor: pointer;
+            user-select: none;
+            font-size: 22px;
+            transition: transform 0.18s ease, background 0.18s;
+            backdrop-filter: blur(4px);
+        }
+        .countdown-arrow:hover { transform: translateY(-50%) scale(1.06); background: rgba(0,0,0,0.6); }
+        .countdown-arrow.left { left: -22px; } /* 使小窗口状态下也露出在外侧 */
+        .countdown-arrow.right { right: -22px; }
+
         /* 响应式适配 */
         @media (max-width: 768px) {
             .control-btn-group {
@@ -311,6 +336,9 @@
                 width: 35px;
                 height: 35px;
             }
+            .countdown-arrow { width: 36px; height: 36px; font-size: 18px; }
+            .countdown-arrow.left { left: -18px; }
+            .countdown-arrow.right { right: -18px; }
         }
     </style>
 </head>
@@ -343,8 +371,12 @@
 
     <!-- 倒计时图层（默认左下角小窗口） -->
     <div class="countdown-layer small-window" id="countdownLayer">
+        <!-- 左右箭头（新增） -->
+        <div class="countdown-arrow left" id="arrowLeft">‹</div>
+        <div class="countdown-arrow right" id="arrowRight">›</div>
+
         <div class="countdown-content">
-            <h2 class="layer-title">距离2026年元旦还有</h2>
+            <h2 class="layer-title" id="layerTitle">距离2026年元旦还有</h2>
             <div class="layer-time-container">
                 <div class="layer-time-unit">
                     <div class="layer-time-number" id="layerDays">00</div>
@@ -791,16 +823,46 @@
         };
 
         // ========== 新增：倒计时核心逻辑（完全保留原功能） ==========
-        // 目标时间：2026年1月1日 00:00:00
-        let targetDate = new Date('2026-01-01T00:00:00').getTime();
-        let countdownEnded = false;
+        // 目标时间：两个时间点（元旦 & 春节）
+        const targets = {
+            newYear: new Date('2026-01-01T00:00:00').getTime(),
+            springFestival: new Date('2026-02-17T00:00:00').getTime() // 2026年春节：2026-02-17
+        };
+        // 默认 activeKey：如果元旦还没到（距离>0）就先显示元旦；如果元旦为0（已到/过）就默认显示春节
+        const now0 = Date.now();
+        let activeKey = (targets.newYear - now0) > 0 ? 'newYear' : 'springFestival';
+
+        // 为兼容原代码，保留 targetDate 变量，但用 activeKey 来切换
+        let targetDate = targets[activeKey];
+
         const countdownLayer = document.getElementById('countdownLayer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const hideUiBtn = document.getElementById('hideUiBtn');
-        const fiveMinutes = 5 * 60 * 1000; // 最后5分钟阈值
+        const arrowLeft = document.getElementById('arrowLeft');
+        const arrowRight = document.getElementById('arrowRight');
+        const layerTitleEl = document.getElementById('layerTitle');
+        const fiveMinutes = 10 * 60 * 1000; // 修改为最后10分钟（你要求的最后10分钟变红）
         const timeNumberEls = document.querySelectorAll('.layer-time-number');
 
-        // 1. 全屏/退出全屏切换
+        // helper：更新标题文本（只改标题显示，不动其他逻辑）
+        function updateTitleByKey(key) {
+            if (key === 'newYear') {
+                layerTitleEl.innerText = '距离2026年元旦还有';
+            } else if (key === 'springFestival') {
+                layerTitleEl.innerText = '距离2026年春节还有';
+            }
+        }
+
+        // 设置 active（手动或自动切换）
+        function setActive(key) {
+            if (!targets[key]) return;
+            activeKey = key;
+            targetDate = targets[activeKey];
+            updateTitleByKey(activeKey);
+            // 如果切换到已到的计时（distance=0），不要自动触发SweetAlert（保留原逻辑，只有在倒计时真正结束时触发）
+        }
+
+        // 1. 全屏/退出全屏切换（保持原样）
         fullscreenBtn.addEventListener('click', function() {
             if (countdownLayer.classList.contains('full-screen')) {
                 // 退出全屏：回到左下角小窗口
@@ -819,18 +881,49 @@
             alert('所有UI已隐藏，刷新网页可恢复');
         });
 
-        // 4. 核心：更新倒计时+样式
+        // 3. 左右箭头切换（新增）
+        arrowLeft.addEventListener('click', function () {
+            // 左箭头 = 切换到上一个（newYear <-> springFestival）
+            const next = activeKey === 'newYear' ? 'springFestival' : 'newYear';
+            setActive(next);
+        });
+        arrowRight.addEventListener('click', function () {
+            // 右箭头 = 切换到下一个（same toggle）
+            const next = activeKey === 'newYear' ? 'springFestival' : 'newYear';
+            setActive(next);
+        });
+
+        // 4. 核心：更新倒计时+样式（持续运行，支持切换）
         function updateCountdown() {
             const now = new Date().getTime();
+
+            // 如果当前 activeKey 是 newYear，需要知道 newYear 的状态，以便在元旦过后默认显示春节
+            const newYearDistance = targets.newYear - now;
+
+            // 如果 newYear 已结束并且 activeKey 仍是 newYear，则默认切换到春节（按你的要求：元旦为0了，就显示春节）
+            if (newYearDistance <= 0 && activeKey === 'newYear') {
+                // 这里不强制阻止用户手动切回，手动点击箭头仍然可以切换回去查看元旦历史/0
+                setActive('springFestival');
+            }
+
+            // 更新以当前 activeKey 的 targetDate 为准
             let distance = targetDate - now;
 
-            // 倒计时结束处理
+            // 倒计时结束处理（针对当前 active）
             if (distance < 0) {
                 distance = 0;
-                countdownEnded = true;
-                // 倒计时结束时自动触发全屏烟花效果（新增联动）
-                countdownLayer.className = 'countdown-layer full-screen';
-                Swal.fire('🎉 倒计时结束！', '2026年元旦快乐！', 'success');
+                // 与原逻辑保持一致：当某个倒计时达到 0 时，触发一次弹窗和全屏（但不会停止更新其他计时）
+                // 为避免频繁重复弹窗，我们用一个简单的标记保留上一次触发的 key
+                if (!updateCountdown._alertedKey || updateCountdown._alertedKey !== activeKey) {
+                    // 只有当这个 activeKey 第一次到 0 时触发
+                    updateCountdown._alertedKey = activeKey;
+                    countdownLayer.className = 'countdown-layer full-screen';
+                    if (activeKey === 'newYear') {
+                        Swal.fire('🎉 倒计时结束！', '2026年元旦快乐！', 'success');
+                    } else if (activeKey === 'springFestival') {
+                        Swal.fire('🎉 倒计时结束！', '2026年春节快乐！', 'success');
+                    }
+                }
             }
 
             // 计算时间
@@ -848,20 +941,19 @@
             document.getElementById('layerSeconds').innerText = padZero(seconds);
             document.getElementById('layerMilliseconds').innerText = padZero(milliseconds, 3);
 
-            // 最后5分钟：时间数字变红
+            // 最后10分钟：时间数字变红（你指定的逻辑）
             if (distance > 0 && distance <= fiveMinutes) {
                 timeNumberEls.forEach(el => el.classList.add('red-text'));
             } else {
                 timeNumberEls.forEach(el => el.classList.remove('red-text'));
             }
 
-            // 持续更新
-            if (!countdownEnded) {
-                requestAnimationFrame(updateCountdown);
-            }
+            // 持续更新（不再在某个倒计时结束后停止，因为用户可以切换到另一个倒计时）
+            requestAnimationFrame(updateCountdown);
         }
 
-        // 初始化：默认左下角小窗口+烟花背景
+        // 初始化：更新标题并启动倒计时
+        updateTitleByKey(activeKey);
         updateCountdown();
     </script>
 </body>
