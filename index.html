@@ -291,17 +291,17 @@
         /* ========== 恢复视频容器显示（不隐藏） ========== */
         .video-container {
             width: 100%;
-            max-width: 300px;
-            height: 200px;
-            border-radius: 16px;
+            max-width: 320px;
+            height: 240px;
+            border-radius: 12px;
             overflow: hidden;
-            border: 2px solid #ffcc00;
-            box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+            border: 2px solid #6c63ff;
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.5);
             background-color: #000;
             position: fixed;
             bottom: 30px;
             right: 30px;
-            z-index: 9998;
+            z-index: -1; /* 仅修改此处：从9998改为-1，隐藏到所有图层后面 */
         }
         #pipVideoIOS {
             width: 100%;
@@ -341,7 +341,7 @@
     <audio id="bgm" src="music/music-f.mp3" loop>
     </audio>
     <!-- 保留DOM，正常显示 -->
-    <canvas id="countdownCanvasIOS" width="300" height="200"></canvas>
+    <canvas id="countdownCanvasIOS" width="320" height="240"></canvas>
     <div class="video-container">
         <video id="pipVideoIOS" controls playsinline muted loop></video>
     </div>
@@ -911,18 +911,30 @@
         }
         updateTitleByKey(activeKey);
         updateCountdown();
-        // ========== 合并按钮核心逻辑：点击一次完成所有操作 ==========
+        // ========== 替换核心：删除旧10秒报数，替换为科技风节日倒计时（iOS兼容） ==========
         const canvasIOS = document.getElementById('countdownCanvasIOS');
         const ctxIOS = canvasIOS.getContext('2d');
         const videoIOS = document.getElementById('pipVideoIOS');
         const pipBtn = document.getElementById('pipBtn');
-        let countdownIOS = 10;
-        let timerIOS = null;
-        let isCountingIOS = false;
         let canvasStreamIOS = null;
+        let countdownTimerIOS = null;
         let isStreamInit = false; // 标记是否已初始化流
-        
-        // 初始化视频流
+
+        // 节日配置（和左下角倒计时同步）
+        const festivalConfig = {
+            newYear: {
+                date: new Date('2026-01-01T00:00:00').getTime(),
+                title: '2026 元旦倒计时'
+            },
+            springFestival: {
+                date: new Date('2026-02-17T00:00:00').getTime(),
+                title: '2026 春节倒计时'
+            }
+        };
+        let activeFestival = 'newYear'; // 初始默认显示元旦
+        let targetTime = festivalConfig[activeFestival].date;
+
+        // 初始化iOS视频流（复用原有逻辑）
         function initCanvasStreamIOS() {
             if (isStreamInit) return Promise.resolve();
             return new Promise((resolve, reject) => {
@@ -939,48 +951,94 @@
                 }
             });
         }
-        
-        // 绘制10秒倒计时
-        function drawCountdownIOS() {
+
+        // 计算节日倒计时（天/时/分/秒）
+        function calculateFestivalCountdown() {
+            const now = new Date().getTime();
+            let timeDiff = targetTime - now;
+
+            // 时间到了自动切换节日
+            if (timeDiff < 0) {
+                activeFestival = activeFestival === 'newYear' ? 'springFestival' : 'newYear';
+                targetTime = festivalConfig[activeFestival].date;
+                timeDiff = targetTime - now;
+            }
+
+            const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+            return {
+                title: festivalConfig[activeFestival].title,
+                days: String(days).padStart(2, '0'),
+                hours: String(hours).padStart(2, '0'),
+                minutes: String(minutes).padStart(2, '0'),
+                seconds: String(seconds).padStart(2, '0')
+            };
+        }
+
+        // 科技风绘制（画中画内显示）
+        function drawFestivalCountdownIOS() {
+            const { title, days, hours, minutes, seconds } = calculateFestivalCountdown();
+
+            // 清空画布+科技风背景
             ctxIOS.clearRect(0, 0, canvasIOS.width, canvasIOS.height);
-            ctxIOS.fillStyle = '#000';
+            ctxIOS.fillStyle = '#0a0a1a';
             ctxIOS.fillRect(0, 0, canvasIOS.width, canvasIOS.height);
-            ctxIOS.strokeStyle = '#ffcc00';
-            ctxIOS.lineWidth = 4;
-            ctxIOS.strokeRect(10, 10, canvasIOS.width - 20, canvasIOS.height - 20);
-            ctxIOS.font = '72px bold';
-            ctxIOS.fillStyle = '#ffcc00';
+
+            // 科技边框+装饰
+            ctxIOS.strokeStyle = '#4dabff';
+            ctxIOS.lineWidth = 2;
+            ctxIOS.beginPath();
+            ctxIOS.roundRect(5, 5, canvasIOS.width - 10, canvasIOS.height - 10, 8);
+            ctxIOS.stroke();
+            ctxIOS.strokeStyle = '#9c27b0';
+            ctxIOS.lineWidth = 1;
+            ctxIOS.beginPath();
+            ctxIOS.roundRect(10, 10, canvasIOS.width - 20, canvasIOS.height - 20, 6);
+            ctxIOS.stroke();
+
+            // 侧边装饰竖条
+            ctxIOS.fillStyle = 'rgba(156, 39, 176, 0.5)';
+            ctxIOS.fillRect(15, 30, 3, 40);
+            ctxIOS.fillRect(canvasIOS.width - 18, 30, 3, 40);
+            ctxIOS.fillRect(15, 170, 3, 40);
+            ctxIOS.fillRect(canvasIOS.width - 18, 170, 3, 40);
+
+            // 中间发光横线
+            ctxIOS.strokeStyle = '#4dabff';
+            ctxIOS.lineWidth = 2;
+            ctxIOS.shadowColor = '#4dabff';
+            ctxIOS.shadowBlur = 8;
+            ctxIOS.beginPath();
+            ctxIOS.moveTo(20, 90);
+            ctxIOS.lineTo(canvasIOS.width - 20, 90);
+            ctxIOS.stroke();
+            ctxIOS.shadowBlur = 0;
+
+            // 标题+倒计时数字
+            ctxIOS.font = '16px bold';
+            ctxIOS.fillStyle = '#4dabff';
+            ctxIOS.textAlign = 'center';
+            ctxIOS.textBaseline = 'top';
+            ctxIOS.shadowColor = '#4dabff';
+            ctxIOS.shadowBlur = 5;
+            ctxIOS.fillText(title, canvasIOS.width / 2, 30);
+            ctxIOS.shadowBlur = 0;
+
+            ctxIOS.font = '18px bold';
+            ctxIOS.fillStyle = '#fff';
             ctxIOS.textAlign = 'center';
             ctxIOS.textBaseline = 'middle';
-            ctxIOS.shadowColor = '#ffcc00';
-            ctxIOS.shadowBlur = 15;
-            if (countdownIOS > 0) {
-                ctxIOS.fillText(countdownIOS, canvasIOS.width / 2, canvasIOS.height / 2);
-            } else {
-                ctxIOS.font = '36px bold';
-                ctxIOS.fillText('结束!', canvasIOS.width / 2, canvasIOS.height / 2);
-            }
+            ctxIOS.shadowColor = '#9c27b0';
+            ctxIOS.shadowBlur = 4;
+            const timeText = `${days}天  ${hours}时  ${minutes}分  ${seconds}秒`;
+            ctxIOS.fillText(timeText, canvasIOS.width / 2, canvasIOS.height / 2 + 15);
             ctxIOS.shadowBlur = 0;
         }
-        
-        // 启动倒计时
-        function startCountdownIOS() {
-            if (isCountingIOS) return;
-            countdownIOS = 10;
-            isCountingIOS = true;
-            timerIOS = setInterval(() => {
-                countdownIOS--;
-                drawCountdownIOS();
-                if (countdownIOS <= 0) {
-                    clearInterval(timerIOS);
-                    isCountingIOS = false;
-                    drawCountdownIOS();
-                }
-            }, 1000);
-            drawCountdownIOS();
-        }
-        
-        // 切换画中画
+
+        // 切换画中画（复用原有逻辑）
         async function togglePiPIOS() {
             try {
                 if (document.pictureInPictureElement) {
@@ -995,29 +1053,30 @@
                 alert('画中画操作失败：' + err.message);
             }
         }
-        
-        // 合并逻辑：点击一次按钮 → 初始化流+启动倒计时+弹画中画
+
+        // 合并逻辑：点击画中画按钮 → 初始化流+启动实时倒计时+弹画中画
         pipBtn.addEventListener('click', async function() {
             try {
                 // 1. 初始化视频流（只初始化一次）
                 await initCanvasStreamIOS();
-                // 2. 启动10秒倒计时
-                startCountdownIOS();
+                // 2. 启动实时倒计时（每秒更新）
+                drawFestivalCountdownIOS();
+                countdownTimerIOS = setInterval(drawFestivalCountdownIOS, 1000);
                 // 3. 弹出画中画
                 await togglePiPIOS();
             } catch (err) {
                 alert('操作失败：' + err.message);
             }
         });
-        
+
         // 页面加载预初始化流（减少点击延迟）
         window.addEventListener('load', () => {
             initCanvasStreamIOS().catch(() => {});
         });
-        
-        // 页面销毁清理
+
+        // 页面销毁清理资源
         window.addEventListener('beforeunload', () => {
-            if (timerIOS) clearInterval(timerIOS);
+            if (countdownTimerIOS) clearInterval(countdownTimerIOS);
             if (canvasStreamIOS) canvasStreamIOS.getTracks().forEach(track => track.stop());
             if (document.pictureInPictureElement) document.exitPictureInPicture().catch(() => {});
         });
