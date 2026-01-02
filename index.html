@@ -143,7 +143,7 @@
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
         }
 
-        /* 控制按钮组（右上角：全屏+隐藏UI，层级最高：99999） */
+        /* 控制按钮组（右上角：开启化妆画 + 全屏+隐藏UI，层级最高：99999） */
         .control-btn-group {
             position: fixed;
             top: 20px;
@@ -319,6 +319,30 @@
         .countdown-arrow.left { left: -22px; } /* 使小窗口状态下也露出在外侧 */
         .countdown-arrow.right { right: -22px; }
 
+        /* --- 新增：化妆画（画中画）样式 --- */
+        .pip-video-container {
+            position: fixed;
+            top: 80px; /* 不遮挡控制按钮 */
+            right: 20px;
+            z-index: 99998;
+            display: none;
+            width: 320px;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 2px solid rgba(255,193,7,0.9);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+        .pip-video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        /* 隐藏 canvas（仅用于绘制和 captureStream） */
+        #pipCanvas { display: none; }
+
         /* 响应式适配 */
         @media (max-width: 768px) {
             .control-btn-group {
@@ -339,6 +363,8 @@
             .countdown-arrow { width: 36px; height: 36px; font-size: 18px; }
             .countdown-arrow.left { left: -18px; }
             .countdown-arrow.right { right: -18px; }
+
+            .pip-video-container { width: 240px; height: 150px; right: 12px; }
         }
     </style>
 </head>
@@ -363,11 +389,21 @@
     <!-- 返回主页按钮（左上角） -->
     <a href="https://ericoec.github.io" class="back-home" target="_self">← 主页</a>
 
-    <!-- 控制按钮组（右上角：全屏+隐藏UI） -->
+    <!-- 控制按钮组（右上角：开启化妆画 + 全屏+隐藏UI） -->
     <div class="control-btn-group">
+        <!-- 新增按钮：开启化妆画（在全屏左边） -->
+        <button class="control-btn" id="startPipBtn">开启化妆画</button>
+
         <button class="control-btn" id="fullscreenBtn">全屏倒计时</button>
         <button class="control-btn" id="hideUiBtn">隐藏UI</button>
     </div>
+
+    <!-- 画中画容器（仿示例） -->
+    <div class="pip-video-container" id="pipWrapper">
+        <video id="pipVideo" playsinline muted autoplay loop></video>
+    </div>
+    <!-- 隐藏画布：用于实时绘制倒计时并 captureStream -->
+    <canvas id="pipCanvas" width="480" height="270"></canvas>
 
     <!-- 倒计时图层（默认左下角小窗口） -->
     <div class="countdown-layer small-window" id="countdownLayer">
@@ -953,6 +989,159 @@
         // 初始化：更新标题并启动倒计时
         updateTitleByKey(activeKey);
         updateCountdown();
+
+        // ========== 新增：化妆画（画中画）功能（参考你给的示例） ==========
+        (function () {
+            const pipCanvas = document.getElementById('pipCanvas');
+            const pipCtx = pipCanvas.getContext('2d');
+            const pipVideo = document.getElementById('pipVideo');
+            const pipWrapper = document.getElementById('pipWrapper');
+            const startPipBtn = document.getElementById('startPipBtn');
+
+            let pipStream = null;
+            let pipAnimId = null;
+            let pipRunning = false;
+
+            // 绘制函数：把当前 activeKey 的倒计时画到 canvas 上
+            function drawPipFrame() {
+                const now = Date.now();
+                const dist = Math.max(0, targets[activeKey] - now);
+
+                const days = Math.floor(dist / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((dist % (1000 * 60)) / 1000);
+                const milliseconds = Math.floor(dist % 1000);
+
+                // 清空
+                pipCtx.clearRect(0, 0, pipCanvas.width, pipCanvas.height);
+
+                // 背景 + 边框
+                pipCtx.fillStyle = '#000';
+                pipCtx.fillRect(0, 0, pipCanvas.width, pipCanvas.height);
+                pipCtx.strokeStyle = '#ffcc00';
+                pipCtx.lineWidth = 6;
+                pipCtx.strokeRect(6, 6, pipCanvas.width - 12, pipCanvas.height - 12);
+
+                // 标题
+                pipCtx.font = '20px sans-serif';
+                pipCtx.fillStyle = '#ffcc00';
+                pipCtx.textAlign = 'center';
+                pipCtx.shadowColor = '#ffcc00';
+                pipCtx.shadowBlur = 12;
+                const titleText = activeKey === 'newYear' ? '距离2026年元旦还有' : '距离2026年春节还有';
+                pipCtx.fillText(titleText, pipCanvas.width / 2, 40);
+
+                // 时间主体（大号）
+                pipCtx.shadowBlur = 0;
+                pipCtx.font = 'bold 56px sans-serif';
+                pipCtx.fillStyle = (dist > 0 && dist <= fiveMinutes) ? '#ff3b30' : '#ffffff';
+                const timeText = `${String(days).padStart(2,'0')}d ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+                pipCtx.fillText(timeText, pipCanvas.width / 2, pipCanvas.height / 2 - 10);
+
+                // 毫秒小字
+                pipCtx.font = '18px sans-serif';
+                pipCtx.fillStyle = '#ffecb3';
+                pipCtx.fillText(`${String(milliseconds).padStart(3,'0')} ms`, pipCanvas.width / 2, pipCanvas.height / 2 + 30);
+
+                // 小提示（直播形态）
+                pipCtx.font = '14px sans-serif';
+                pipCtx.fillStyle = '#bdbdbd';
+                pipCtx.fillText('LIVE • 倒计时画中画演示', pipCanvas.width / 2, pipCanvas.height - 20);
+
+                // loop
+                pipAnimId = requestAnimationFrame(drawPipFrame);
+            }
+
+            async function startPip() {
+                if (pipRunning) return;
+                // 显示容器
+                pipWrapper.style.display = 'block';
+                // start capture stream
+                try {
+                    pipStream = pipCanvas.captureStream(30);
+                } catch (err) {
+                    alert('无法获取画布流：' + (err && err.message ? err.message : err));
+                    pipWrapper.style.display = 'none';
+                    return;
+                }
+                pipVideo.srcObject = pipStream;
+                try {
+                    await pipVideo.play();
+                } catch (err) {
+                    // autoplay may be blocked; user can click video if needed
+                    console.log('pip video play error', err);
+                }
+
+                // 尝试请求原生画中画（若浏览器支持）
+                try {
+                    if (typeof pipVideo.requestPictureInPicture === 'function') {
+                        await pipVideo.requestPictureInPicture();
+                    }
+                } catch (err) {
+                    // ignore PiP errors (still works as small floating video)
+                    console.log('requestPictureInPicture error', err);
+                }
+
+                pipRunning = true;
+                startPipBtn.textContent = '关闭化妆画';
+                // 开始绘制
+                if (pipAnimId) cancelAnimationFrame(pipAnimId);
+                drawPipFrame();
+            }
+
+            async function stopPip() {
+                if (!pipRunning) return;
+                // 退出原生 PiP（若处于 PiP）
+                try {
+                    if (document.pictureInPictureElement && document.pictureInPictureElement === pipVideo) {
+                        await document.exitPictureInPicture();
+                    }
+                } catch (err) {
+                    console.log('exitPictureInPicture error', err);
+                }
+
+                // 停止绘制
+                if (pipAnimId) {
+                    cancelAnimationFrame(pipAnimId);
+                    pipAnimId = null;
+                }
+
+                // 停止流
+                try {
+                    if (pipStream) {
+                        pipStream.getTracks().forEach(t => t.stop());
+                        pipStream = null;
+                    }
+                } catch (err) {
+                    console.log('stop stream error', err);
+                }
+
+                pipVideo.pause();
+                pipVideo.srcObject = null;
+                pipWrapper.style.display = 'none';
+                pipRunning = false;
+                startPipBtn.textContent = '开启化妆画';
+            }
+
+            // 切换按钮
+            startPipBtn.addEventListener('click', function () {
+                if (!pipRunning) {
+                    startPip();
+                } else {
+                    stopPip();
+                }
+            });
+
+            // 在页面卸载时清理
+            window.addEventListener('beforeunload', () => {
+                if (pipAnimId) cancelAnimationFrame(pipAnimId);
+                if (pipStream) pipStream.getTracks().forEach(t => t.stop());
+                if (document.pictureInPictureElement && document.pictureInPictureElement === pipVideo) {
+                    try { document.exitPictureInPicture(); } catch(e) {}
+                }
+            });
+        })();
     </script>
 </body>
 </html>
