@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <title>2026新年烟花</title>
@@ -108,12 +108,15 @@
                 opacity: 0;
             }
         }
+
+        /* ========== 新增：倒计时图层样式（完全保留原功能） ========== */
         /* 隐藏UI时，隐藏所有按钮和倒计时 */
         body.hidden-all-ui .back-home,
         body.hidden-all-ui .control-btn-group,
         body.hidden-all-ui .countdown-layer {
             display: none !important;
         }
+
         /* 返回主页按钮（层级最高：99999） */
         .back-home {
             position: fixed;
@@ -133,12 +136,14 @@
             transition: all 0.3s ease;
             backdrop-filter: blur(4px);
         }
+
         .back-home:hover {
             background: rgba(0, 0, 0, 0.7);
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
         }
-        /* 控制按钮组（右上角：画中画+全屏+隐藏UI，层级最高：99999） */
+
+        /* 控制按钮组（右上角：全屏+隐藏UI，层级最高：99999） */
         .control-btn-group {
             position: fixed;
             top: 20px;
@@ -147,6 +152,7 @@
             display: flex;
             gap: 10px;
         }
+
         .control-btn {
             padding: 10px 16px;
             background: rgba(0, 0, 0, 0.5);
@@ -159,11 +165,13 @@
             transition: all 0.3s ease;
             backdrop-filter: blur(4px);
         }
+
         .control-btn:hover {
             background: rgba(0, 0, 0, 0.7);
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
         }
+
         /* 核心：倒计时图层（层级：9999，高于烟花z-index 9999，持平但不冲突） */
         .countdown-layer {
             position: fixed;
@@ -177,6 +185,7 @@
             background-clip: padding-box, border-box;
             background-origin: padding-box, border-box;
         }
+
         /* 全屏倒计时（金红渐变图层，不遮挡烟花） */
         .countdown-layer.full-screen {
             top: 0;
@@ -194,12 +203,14 @@
             background-size: 400% 400%;
             animation: bgFestive 15s ease infinite;
         }
+
         /* 金红渐变动画 */
         @keyframes bgFestive {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+
         /* 缩小版倒计时（左下角，透明背景，露出烟花） */
         .countdown-layer.small-window {
             bottom: 20px;
@@ -210,11 +221,13 @@
             background-image: linear-gradient(transparent, transparent), 
                               linear-gradient(45deg, rgba(217,33,33,0.6), rgba(255,193,7,0.6));
         }
+
         /* 最后10分钟：时间数字变红 */
         .layer-time-number.red-text {
             color: #ff3b30 !important;
             text-shadow: 0 0 10px rgba(255, 59, 48, 0.8);
         }
+
         /* 倒计时内容容器 */
         .countdown-content {
             display: flex;
@@ -222,30 +235,37 @@
             align-items: center;
             gap: 16px;
         }
+
         .countdown-layer.small-window .countdown-content {
             gap: 8px;
         }
+
         .layer-title {
             font-size: 2rem;
             text-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
             color: #ffc107;
         }
+
         .countdown-layer.small-window .layer-title {
             font-size: 1.2rem;
         }
+
         .layer-time-container {
             display: flex;
             gap: 1rem;
         }
+
         .countdown-layer.small-window .layer-time-container {
             gap: 0.5rem;
         }
+
         .layer-time-unit {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
         }
+
         .layer-time-number {
             font-size: 3rem;
             font-weight: 700;
@@ -259,18 +279,21 @@
             border: 1px solid #ffc107;
             color: #fff;
         }
+
         .countdown-layer.small-window .layer-time-number {
             font-size: 1.5rem;
             width: 40px;
             height: 40px;
             background: rgba(0,0,0,0.2);
         }
+
         .layer-time-label {
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #ffecb3;
         }
+
         /* 新增：左右切换箭头（覆盖在倒计时图层两侧，既在全屏也在小窗口可见） */
         .countdown-arrow {
             position: absolute;
@@ -283,7 +306,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.45);
+            border: 1px solid rgba(255,193,7,0.9);
             color: #fff;
             cursor: pointer;
             user-select: none;
@@ -294,6 +318,7 @@
         .countdown-arrow:hover { transform: translateY(-50%) scale(1.06); background: rgba(0,0,0,0.6); }
         .countdown-arrow.left { left: -22px; } /* 使小窗口状态下也露出在外侧 */
         .countdown-arrow.right { right: -22px; }
+
         /* 响应式适配 */
         @media (max-width: 768px) {
             .control-btn-group {
@@ -315,21 +340,14 @@
             .countdown-arrow.left { left: -18px; }
             .countdown-arrow.right { right: -18px; }
         }
-        /* ========== 画中画相关样式（隐藏元素，仅用于生成视频流） ========== */
-        #pipCanvas, #pipVideo {
-            position: fixed;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
-            z-index: -1;
-        }
     </style>
 </head>
 <body onselectstart="return false">
     <div id="backgroundRendering" style="z-index: 0;"></div>
-    <canvas id="fireworks" style="z-index: 9999;"></canvas>
+    <canvas id="fireworks" style="z-index: 9999;">
+    </canvas>
     <audio id="bgm" src="music/music-f.mp3" loop>
+    </audio>
     <div style="display: none">
         <div class="shape">🏮2026新年快乐🏮</div>
         <div class="shape">🏮恭喜发财🏮</div>
@@ -340,18 +358,23 @@
         <div class="shape">🏮阖家欢乐🏮</div>
         <div class="shape">🏮财源广进🏮</div>
     </div>
-    <!-- 返回主页按钮 -->
+
+    <!-- ========== 新增：倒计时图层DOM元素 ========== -->
+    <!-- 返回主页按钮（左上角） -->
     <a href="https://ericoec.github.io" class="back-home" target="_self">← 主页</a>
-    <!-- 控制按钮组（调整顺序：画中画 → 全屏 → 隐藏UI） -->
+
+    <!-- 控制按钮组（右上角：全屏+隐藏UI） -->
     <div class="control-btn-group">
-        <button class="control-btn" id="pipBtn">画中画</button>
         <button class="control-btn" id="fullscreenBtn">全屏倒计时</button>
         <button class="control-btn" id="hideUiBtn">隐藏UI</button>
     </div>
-    <!-- 倒计时图层 -->
+
+    <!-- 倒计时图层（默认左下角小窗口） -->
     <div class="countdown-layer small-window" id="countdownLayer">
+        <!-- 左右箭头（新增） -->
         <div class="countdown-arrow left" id="arrowLeft">‹</div>
         <div class="countdown-arrow right" id="arrowRight">›</div>
+
         <div class="countdown-content">
             <h2 class="layer-title" id="layerTitle">距离2026年元旦还有</h2>
             <div class="layer-time-container">
@@ -378,9 +401,7 @@
             </div>
         </div>
     </div>
-    <!-- 画中画核心元素（隐藏，用于生成实时流） -->
-    <canvas id="pipCanvas" width="480" height="180"></canvas>
-    <video id="pipVideo" playsinline muted loop></video>
+
     <script src="documents/sweetalert2.all.min.js"></script>
     <script>
         console.error = function() {};
@@ -650,7 +671,7 @@
                     let a = getRandom(-Math.PI, Math.PI);
                     let x = getRandom(0, fullRange) * Math.cos(a) + this.x;
                     let y = getRandom(0, fullRange) * Math.sin(a) + this.y;
-                    let radius = getRandom(1, 2);
+                    let radius = getRandom(0, 2);
                     let embellishment = new newEmbellishment(this.x, this.y, radius, color, x, y);
                     this.explodes.push(embellishment);
                 }
@@ -695,7 +716,7 @@
                 let text = ele.innerHTML;
                 context.save();
                 let fontSize = getRandom(3, 11);
-                context.font = fontSize + "vw bold";
+                context.font = fontSize + "vw bold"; // 移除固定字体"宋体"
                 context.textAlign = "center";
                 context.textBaseline = "middle";
                 context.fillStyle =
@@ -764,7 +785,7 @@
                 fireworksObject.save();
                 fireworksObject.beginPath();
                 fireworksObject.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-                fireworksObject.fillStyle = "rgba(255,255,255,0.8)";
+                fireworksObject.fillStyle = "rgba(255,255,255," + this.r + ")";
                 fireworksObject.fill();
                 fireworksObject.restore();
             },
@@ -800,24 +821,33 @@
                 this.paint();
             },
         };
-        // ========== 倒计时核心逻辑 ==========
+
+        // ========== 新增：倒计时核心逻辑（修正版） ==========
+        // 目标时间：两个时间点（元旦 & 春节）
         const targets = {
             newYear: new Date('2026-01-01T00:00:00').getTime(),
-            springFestival: new Date('2026-02-17T00:00:00').getTime()
+            springFestival: new Date('2026-02-17T00:00:00').getTime() // 2026年春节：2026-02-17
         };
+        // 默认 activeKey：如果元旦还没到（距离>0）就先显示元旦；如果元旦为0（已到/过）就默认显示春节
         const now0 = Date.now();
         let activeKey = (targets.newYear - now0) > 0 ? 'newYear' : 'springFestival';
+
+        // 为兼容原代码，保留 targetDate 变量，但用 activeKey 来切换
         let targetDate = targets[activeKey];
+
         const countdownLayer = document.getElementById('countdownLayer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const hideUiBtn = document.getElementById('hideUiBtn');
         const arrowLeft = document.getElementById('arrowLeft');
         const arrowRight = document.getElementById('arrowRight');
         const layerTitleEl = document.getElementById('layerTitle');
-        const fiveMinutes = 10 * 60 * 1000;
+        const fiveMinutes = 10 * 60 * 1000; // 修改为最后10分钟（你要求的最后10分钟变红）
         const timeNumberEls = document.querySelectorAll('.layer-time-number');
+
+        // 标记：用户是否已手动切换（手动切换后，不再被自动覆盖）
         let userManualSwitch = false;
 
+        // helper：更新标题文本（只改标题显示，不动其他逻辑）
         function updateTitleByKey(key) {
             if (key === 'newYear') {
                 layerTitleEl.innerText = '距离2026年元旦还有';
@@ -826,6 +856,7 @@
             }
         }
 
+        // 设置 active（手动或自动切换）
         function setActive(key) {
             if (!targets[key]) return;
             activeKey = key;
@@ -833,42 +864,56 @@
             updateTitleByKey(activeKey);
         }
 
+        // 1. 全屏/退出全屏切换（保持原样）
         fullscreenBtn.addEventListener('click', function() {
             if (countdownLayer.classList.contains('full-screen')) {
+                // 退出全屏：回到左下角小窗口
                 countdownLayer.className = 'countdown-layer small-window';
                 fullscreenBtn.textContent = '全屏倒计时';
             } else {
+                // 进入全屏：金红渐变图层
                 countdownLayer.className = 'countdown-layer full-screen';
                 fullscreenBtn.textContent = '退出全屏';
             }
         });
 
+        // 2. 隐藏UI功能（隐藏所有按钮和倒计时，刷新恢复）
         hideUiBtn.addEventListener('click', function() {
             document.body.classList.add('hidden-all-ui');
             alert('所有UI已隐藏，刷新网页可恢复');
         });
 
+        // 3. 左右箭头切换（新增） —— 点击后标记为“手动切换”
         arrowLeft.addEventListener('click', function () {
             userManualSwitch = true;
             const next = activeKey === 'newYear' ? 'springFestival' : 'newYear';
             setActive(next);
         });
-
         arrowRight.addEventListener('click', function () {
             userManualSwitch = true;
             const next = activeKey === 'newYear' ? 'springFestival' : 'newYear';
             setActive(next);
         });
 
+        // 4. 核心：更新倒计时+样式（持续运行，支持切换）
         function updateCountdown() {
             const now = new Date().getTime();
+
+            // 计算元旦剩余时间（用于自动默认切换判断）
             const newYearDistance = targets.newYear - now;
+
+            // 只有在用户**未手动切换**的情况下，自动从元旦切到春节（当元旦到达时）
             if (newYearDistance <= 0 && !userManualSwitch && activeKey === 'newYear') {
                 setActive('springFestival');
             }
+
+            // 更新以当前 activeKey 的 targetDate 为准
             let distance = targetDate - now;
+
+            // 倒计时结束处理（针对当前 active）
             if (distance < 0) {
                 distance = 0;
+                // 用一个标记避免重复弹窗
                 if (!updateCountdown._alertedKey || updateCountdown._alertedKey !== activeKey) {
                     updateCountdown._alertedKey = activeKey;
                     countdownLayer.className = 'countdown-layer full-screen';
@@ -879,154 +924,35 @@
                     }
                 }
             }
+
+            // 计算时间
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
             const milliseconds = Math.floor((distance % 1000));
+
+            // 补零渲染
             const padZero = (num, length = 2) => num.toString().padStart(length, '0');
-            
             document.getElementById('layerDays').innerText = padZero(days);
             document.getElementById('layerHours').innerText = padZero(hours);
             document.getElementById('layerMinutes').innerText = padZero(minutes);
             document.getElementById('layerSeconds').innerText = padZero(seconds);
             document.getElementById('layerMilliseconds').innerText = padZero(milliseconds, 3);
-    
+
+            // 最后10分钟：时间数字变红（你指定的逻辑）
             if (distance > 0 && distance <= fiveMinutes) {
                 timeNumberEls.forEach(el => el.classList.add('red-text'));
             } else {
                 timeNumberEls.forEach(el => el.classList.remove('red-text'));
             }
+
             requestAnimationFrame(updateCountdown);
         }
 
+        // 初始化：更新标题并启动倒计时
         updateTitleByKey(activeKey);
         updateCountdown();
-
-        // ========== 画中画核心逻辑（系统UI级画中画，实时同步倒计时类型） ==========
-        const pipCanvas = document.getElementById('pipCanvas');
-        const pipCtx = pipCanvas.getContext('2d');
-        const pipVideo = document.getElementById('pipVideo');
-        const pipBtn = document.getElementById('pipBtn');
-        let canvasStream = null;
-        let isPiPActive = false;
-
-        // 初始化画布流（适配iOS Safari）
-        function initPipStream() {
-            try {
-                canvasStream = pipCanvas.captureStream(30); // 30帧/秒，保证流畅度
-                pipVideo.srcObject = canvasStream;
-                pipVideo.load(); // 预加载，避免点击延迟
-            } catch (err) {
-                alert('画中画初始化失败：' + err.message + '，请更新浏览器至最新版本');
-                pipBtn.disabled = true;
-            }
-        }
-
-        // 实时绘制画中画内容（同步当前倒计时：元旦/春节）
-        function drawPipContent() {
-            // 清空画布
-            pipCtx.clearRect(0, 0, pipCanvas.width, pipCanvas.height);
-            
-            // 绘制节日渐变背景
-            const gradient = pipCtx.createLinearGradient(0, 0, pipCanvas.width, pipCanvas.height);
-            gradient.addColorStop(0, 'rgba(217,33,33,0.6)');
-            gradient.addColorStop(1, 'rgba(255,193,7,0.6)');
-            pipCtx.fillStyle = gradient;
-            pipCtx.fillRect(0, 0, pipCanvas.width, pipCanvas.height);
-            
-            // 绘制半透明内容框（提升可读性）
-            pipCtx.fillStyle = 'rgba(22, 25, 41, 0.85)';
-            pipCtx.fillRect(10, 10, pipCanvas.width - 20, pipCanvas.height - 20);
-            
-            // 绘制倒计时标题（同步当前选中的类型：元旦/春节）
-            pipCtx.font = '16px bold';
-            pipCtx.fillStyle = '#ffc107';
-            pipCtx.textAlign = 'center';
-            pipCtx.textBaseline = 'middle';
-            pipCtx.shadowColor = 'rgba(255, 193, 7, 0.8)';
-            pipCtx.shadowBlur = 10;
-            pipCtx.fillText(layerTitleEl.innerText, pipCanvas.width / 2, 35);
-            pipCtx.shadowBlur = 0;
-            
-            // 绘制时间数字（同步主倒计时的数值和红色提醒状态）
-            const timeItems = [
-                { num: document.getElementById('layerDays').innerText, label: '天' },
-                { num: document.getElementById('layerHours').innerText, label: '时' },
-                { num: document.getElementById('layerMinutes').innerText, label: '分' },
-                { num: document.getElementById('layerSeconds').innerText, label: '秒' },
-                { num: document.getElementById('layerMilliseconds').innerText, label: '微秒' }
-            ];
-            const timeContainerWidth = pipCanvas.width - 40;
-            const timeItemGap = 12;
-            const timeItemWidth = (timeContainerWidth - 4 * timeItemGap) / 5;
-            const timeItemTop = 60;
-            
-            timeItems.forEach((item, index) => {
-                const itemX = 20 + index * (timeItemWidth + timeItemGap) + timeItemWidth / 2;
-                // 绘制时间框背景
-                pipCtx.fillStyle = 'rgba(0,0,0,0.2)';
-                pipCtx.fillRect(itemX - timeItemWidth / 2, timeItemTop, timeItemWidth, 45);
-                pipCtx.strokeStyle = '#ffc107';
-                pipCtx.lineWidth = 1;
-                pipCtx.strokeRect(itemX - timeItemWidth / 2, timeItemTop, timeItemWidth, 45);
-                
-                // 绘制时间数字（最后10分钟时同步变红）
-                pipCtx.font = '20px bold';
-                pipCtx.fillStyle = timeNumberEls[0].classList.contains('red-text') ? '#ff3b30' : '#fff';
-                if (timeNumberEls[0].classList.contains('red-text')) {
-                    pipCtx.shadowColor = 'rgba(255, 59, 48, 0.8)';
-                    pipCtx.shadowBlur = 8;
-                }
-                pipCtx.textAlign = 'center';
-                pipCtx.textBaseline = 'middle';
-                pipCtx.fillText(item.num, itemX, timeItemTop + 22);
-                pipCtx.shadowBlur = 0;
-                
-                // 绘制时间单位
-                pipCtx.font = '12px';
-                pipCtx.fillStyle = '#ffecb3';
-                pipCtx.fillText(item.label.toUpperCase(), itemX, timeItemTop + 55);
-            });
-            
-            // 持续刷新，保证实时同步
-            requestAnimationFrame(drawPipContent);
-        }
-
-        // 切换画中画状态（系统UI级）
-        async function togglePiP() {
-            try {
-                if (document.pictureInPictureElement) {
-                    // 退出画中画
-                    await document.exitPictureInPicture();
-                    pipBtn.textContent = '画中画';
-                    isPiPActive = false;
-                } else {
-                    // 进入画中画（需确保视频在播放）
-                    if (pipVideo.paused) await pipVideo.play();
-                    await pipVideo.requestPictureInPicture();
-                    pipBtn.textContent = '退出画中画';
-                    isPiPActive = true;
-                }
-            } catch (err) {
-                alert('画中画操作失败：' + err.message + '，请检查浏览器画中画权限（iOS需在Safari设置中开启）');
-            }
-        }
-
-        // 页面加载时初始化
-        window.addEventListener('load', () => {
-            initPipStream();
-            drawPipContent();
-        });
-
-        // 绑定画中画按钮事件
-        pipBtn.addEventListener('click', togglePiP);
-
-        // 页面销毁时清理资源
-        window.addEventListener('beforeunload', () => {
-            if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
-            if (document.pictureInPictureElement) document.exitPictureInPicture().catch(() => {});
-        });
     </script>
 </body>
 </html>
