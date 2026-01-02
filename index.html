@@ -359,9 +359,8 @@
     </canvas>
     <audio id="bgm" src="music/music-f.mp3" loop>
     </audio>
-    <!-- 新增：Canvas（用于绘制倒计时，生成实时流） -->
-    <!-- 改为放到屏幕外（不能 display:none，某些浏览器/系统不渲染 display:none canvas） -->
-    <canvas id="pipCanvas" width="420" height="220" style="position:fixed; left:-9999px; top:-9999px; width:420px; height:220px;"></canvas>
+    <!-- 新增：Canvas（用于镜像绘制左下角倒计时，生成实时流） -->
+    <canvas id="pipCanvas" width="480" height="180" style="display: none;"></canvas>
     <!-- 新增：视频元素（隐藏，用于触发系统原生PiP） -->
     <video id="pipVideo" controls playsinline muted loop></video>
 
@@ -513,6 +512,12 @@
                         }
                     };
                 }
+                // 修复：初始化message元素（原代码缺失，避免报错）
+                const messageEl = document.createElement('div');
+                messageEl.className = 'message';
+                messageEl.innerHTML = '<p></p>';
+                document.body.appendChild(messageEl);
+                
                 for (let i = 0; i <= 10; i++) {
                     setTimeout(function () {
                         document.querySelector("body > div.message").style.opacity = i / 10;
@@ -872,6 +877,8 @@
             } else if (key === 'springFestival') {
                 layerTitleEl.innerText = '距离2026年春节还有';
             }
+            // 切换后立即同步画中画数据
+            syncPipData();
         }
 
         // 设置 active（手动或自动切换）
@@ -880,7 +887,6 @@
             activeKey = key;
             targetDate = targets[activeKey];
             updateTitleByKey(activeKey);
-            // 不依赖外部 ctx — drawPipCountdown 自己会根据 activeKey 绘制
         }
 
         // 1. 全屏/退出全屏切换（保持原样）
@@ -894,6 +900,8 @@
                 countdownLayer.className = 'countdown-layer full-screen';
                 fullscreenBtn.textContent = '退出全屏';
             }
+            // 切换全屏后同步画中画数据
+            syncPipData();
         });
 
         // 2. 隐藏UI功能（隐藏所有按钮和倒计时，刷新恢复）
@@ -914,7 +922,21 @@
             setActive(next);
         });
 
-        // 4. 核心：更新倒计时+样式（持续运行，支持切换）
+        // 4. 同步倒计时数据到画中画（关键：确保镜像一致）
+        function syncPipData() {
+            // 直接读取页面DOM元素数据，避免数据同步延迟
+            window.pipMirrorData = {
+                title: layerTitleEl.innerText,
+                days: document.getElementById('layerDays').innerText,
+                hours: document.getElementById('layerHours').innerText,
+                minutes: document.getElementById('layerMinutes').innerText,
+                seconds: document.getElementById('layerSeconds').innerText,
+                milliseconds: document.getElementById('layerMilliseconds').innerText,
+                isRed: Array.from(timeNumberEls).some(el => el.classList.contains('red-text'))
+            };
+        }
+
+        // 5. 核心：更新倒计时+样式（持续运行，支持切换）
         function updateCountdown() {
             const now = new Date().getTime();
 
@@ -972,7 +994,8 @@
                 timeNumberEls.forEach(el => el.classList.remove('red-text'));
             }
 
-            // 同步更新画中画Canvas内容 via activeKey (drawPipCountdown reads activeKey directly)
+            // 实时同步画中画数据（每次更新都同步，避免空白）
+            syncPipData();
 
             requestAnimationFrame(updateCountdown);
         }
@@ -981,102 +1004,132 @@
         updateTitleByKey(activeKey);
         updateCountdown();
 
-        // ========== 新增：系统原生画中画核心逻辑（Canvas+Video流） ==========
+        // ========== 新增：画中画核心逻辑（完全镜像左下角倒计时） ==========
         const pipCanvas = document.getElementById('pipCanvas');
         const pipCtx = pipCanvas.getContext('2d');
         const pipVideo = document.getElementById('pipVideo');
         const pipBtn = document.getElementById('pipBtn');
         let canvasStream = null;
         let isPiPActive = false;
-        let pipLoopId = null;
 
-        // 获取高精度 epoch ms
-        function highResNowMs() {
-            // performance.timeOrigin is supported in modern browsers
-            if (performance && performance.timeOrigin) {
-                return performance.timeOrigin + performance.now();
-            }
-            return Date.now();
-        }
-
-        // 初始化Canvas流（注入视频，触发PiP）
+        // 1. 初始化Canvas流（优先用H.264编码，兼容全平台）
         function initPipStream() {
             try {
-                // 生成Canvas实时流（30帧/秒，兼容iOS/安卓/桌面）
-                canvasStream = pipCanvas.captureStream ? pipCanvas.captureStream(30) : null;
-                if (!canvasStream) throw new Error('captureStream not supported');
+                // 生成Canvas实时流（30帧/秒，流畅无卡顿）
+                canvasStream = pipCanvas.captureStream(30);
+                // 注入视频元素，提前加载
                 pipVideo.srcObject = canvasStream;
                 pipVideo.load();
-                // 尝试预播放（如果允许）
-                pipVideo.play().catch(()=>{});
+                // 静默播放（用户点击前加载完成，避免切换延迟）
+                pipVideo.play().then(() => {
+                    console.log('PiP视频已就绪');
+                }).catch(err => {
+                    console.log('PiP视频预加载失败（正常，需用户触发）：', err);
+                });
             } catch (err) {
                 pipBtn.disabled = true;
                 pipBtn.textContent = '画中画不支持';
+                alert('画中画初始化失败：' + err.message + '，请更新浏览器');
                 console.error('PiP初始化失败：', err);
             }
         }
 
-        // Canvas绘制画中画倒计时（直接根据 activeKey 和 targets 绘制）
-        function drawPipCountdownFrame() {
-            const nowMs = highResNowMs();
-            let distance = targets[activeKey] - nowMs;
-            if (distance < 0) distance = 0;
+        // 2. Canvas绘制：完全镜像左下角倒计时样式
+        function drawPipMirror() {
+            const data = window.pipMirrorData || {};
+            // 确保数据存在再绘制，避免空白
+            if (!data.title || !data.days) {
+                requestAnimationFrame(drawPipMirror);
+                return;
+            }
 
-            const totalMs = Math.floor(distance);
-            const frac = distance - totalMs;
-            const days = Math.floor(totalMs / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((totalMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((totalMs % (1000 * 60)) / 1000);
-            const milliseconds = totalMs % 1000;
-            const microseconds = Math.floor(frac * 1000); // 0-999
+            // 1. 清空画布（避免残留）
+            pipCtx.clearRect(0, 0, pipCanvas.width, pipCanvas.height);
 
-            const isLastTen = (targets[activeKey] - Date.now() <= fiveMinutes) && (targets[activeKey] - Date.now() > 0);
+            // 2. 绘制倒计时背景（完全匹配左下角样式：金红渐变边框+透明背景）
+            const gradient = pipCtx.createLinearGradient(0, 0, pipCanvas.width, pipCanvas.height);
+            gradient.addColorStop(0, 'rgba(217,33,33,0.6)');
+            gradient.addColorStop(1, 'rgba(255,193,7,0.6)');
+            // 边框背景（模拟原图层的border-image）
+            pipCtx.fillStyle = gradient;
+            pipCtx.fillRect(0, 0, pipCanvas.width, pipCanvas.height);
+            // 内层透明背景（匹配原图层的背景）
+            pipCtx.fillStyle = 'rgba(22, 25, 41, 0.85)';
+            pipCtx.fillRect(10, 10, pipCanvas.width - 20, pipCanvas.height - 20);
 
-            // Clear
-            pipCtx.clearRect(0,0,pipCanvas.width,pipCanvas.height);
-
-            // Background & border
-            pipCtx.fillStyle = '#0f1220';
-            pipCtx.fillRect(0,0,pipCanvas.width,pipCanvas.height);
-            pipCtx.strokeStyle = '#ffc107';
-            pipCtx.lineWidth = 3;
-            pipCtx.strokeRect(8,8,pipCanvas.width-16,pipCanvas.height-16);
-
-            // Title
-            pipCtx.font = 'bold 18px sans-serif';
+            // 3. 绘制标题（完全匹配原标题样式）
+            pipCtx.font = '16px bold'; // 对应小窗口标题1.2rem的比例
             pipCtx.fillStyle = '#ffc107';
             pipCtx.textAlign = 'center';
             pipCtx.textBaseline = 'middle';
-            const title = activeKey === 'newYear' ? '距离2026年元旦还有' : '距离2026年春节还有';
-            pipCtx.fillText(title, pipCanvas.width/2, 28);
+            pipCtx.shadowColor = 'rgba(255, 193, 7, 0.8)';
+            pipCtx.shadowBlur = 10;
+            pipCtx.fillText(data.title, pipCanvas.width / 2, 35);
+            pipCtx.shadowBlur = 0;
 
-            // Main line (days hours minutes)
-            pipCtx.font = 'bold 28px monospace';
-            pipCtx.fillStyle = isLastTen ? '#ff3b30' : '#ffffff';
-            const line1 = `${String(days).padStart(2,'0')}天 ${String(hours).padStart(2,'0')}时 ${String(minutes).padStart(2,'0')}分`;
-            pipCtx.fillText(line1, pipCanvas.width/2, pipCanvas.height/2 - 6);
+            // 4. 绘制时间数字容器（完全镜像原布局）
+            const timeContainerWidth = pipCanvas.width - 40;
+            const timeItemGap = 12; // 对应原窗口0.5rem的间距
+            const timeItemWidth = (timeContainerWidth - (5 - 1) * timeItemGap) / 5;
+            const timeItemTop = 60;
 
-            // Secondary line (seconds milliseconds microseconds)
-            pipCtx.font = '14px monospace';
-            pipCtx.fillStyle = '#ffecb3';
-            const line2 = `${String(seconds).padStart(2,'0')}秒 ${String(milliseconds).padStart(3,'0')}毫秒 ${String(microseconds).padStart(3,'0')}微秒`;
-            pipCtx.fillText(line2, pipCanvas.width/2, pipCanvas.height/2 + 28);
+            // 5. 绘制每个时间单元（天/时/分/秒/微秒，完全匹配原样式）
+            const timeItems = [
+                { num: data.days, label: '天' },
+                { num: data.hours, label: '时' },
+                { num: data.minutes, label: '分' },
+                { num: data.seconds, label: '秒' },
+                { num: data.milliseconds, label: '微秒' }
+            ];
 
-            // Footer
-            pipCtx.font = '12px sans-serif';
-            pipCtx.fillStyle = '#9e9e9e';
-            pipCtx.fillText('LIVE • 画中画倒计时', pipCanvas.width/2, pipCanvas.height - 18);
+            timeItems.forEach((item, index) => {
+                const itemX = 20 + index * (timeItemWidth + timeItemGap) + timeItemWidth / 2;
+
+                // 绘制数字背景（原样式：黑色半透明+金色边框）
+                pipCtx.fillStyle = 'rgba(0,0,0,0.2)';
+                pipCtx.fillRect(
+                    itemX - timeItemWidth/2,
+                    timeItemTop,
+                    timeItemWidth,
+                    45 // 对应原窗口40px高度的比例
+                );
+                pipCtx.strokeStyle = '#ffc107';
+                pipCtx.lineWidth = 1;
+                pipCtx.strokeRect(
+                    itemX - timeItemWidth/2,
+                    timeItemTop,
+                    timeItemWidth,
+                    45
+                );
+
+                // 绘制时间数字（原样式：白色/红色+居中）
+                pipCtx.font = '20px bold'; // 对应小窗口1.5rem的比例
+                pipCtx.fillStyle = data.isRed ? '#ff3b30' : '#fff';
+                pipCtx.textAlign = 'center';
+                pipCtx.textBaseline = 'middle';
+                if (data.isRed) {
+                    pipCtx.shadowColor = 'rgba(255, 59, 48, 0.8)';
+                    pipCtx.shadowBlur = 8;
+                }
+                pipCtx.fillText(item.num, itemX, timeItemTop + 22);
+                pipCtx.shadowBlur = 0;
+
+                // 绘制时间标签（原样式：浅金色+ uppercase）
+                pipCtx.font = '12px';
+                pipCtx.fillStyle = '#ffecb3';
+                pipCtx.textAlign = 'center';
+                pipCtx.textBaseline = 'middle';
+                pipCtx.fillText(item.label.toUpperCase(), itemX, timeItemTop + 55);
+            });
+
+            // 持续绘制，确保实时同步
+            requestAnimationFrame(drawPipMirror);
         }
 
-        function pipLoop() {
-            drawPipCountdownFrame();
-            pipLoopId = requestAnimationFrame(pipLoop);
-        }
-
+        // 3. 切换系统原生画中画（兼容全平台）
         async function togglePip() {
-            if (!pipVideo || !document.pictureInPictureEnabled) {
-                alert('当前浏览器不支持系统原生画中画');
+            if (!pipVideo || !('requestPictureInPicture' in pipVideo)) {
+                alert('当前浏览器不支持系统原生画中画，请更新Chrome/Safari');
                 return;
             }
 
@@ -1087,28 +1140,30 @@
                     isPiPActive = false;
                     pipBtn.textContent = '画中画';
                 } else {
-                    // 进入PiP（确保视频在播放）
-                    try { if (pipVideo.paused) await pipVideo.play(); } catch(e){}
+                    // 进入PiP（必须用户点击触发，浏览器安全策略）
+                    if (pipVideo.paused) {
+                        await pipVideo.play();
+                    }
                     await pipVideo.requestPictureInPicture();
                     isPiPActive = true;
                     pipBtn.textContent = '退出画中画';
                 }
             } catch (err) {
-                alert('画中画操作失败：' + (err && err.message ? err.message : err));
+                alert('画中画操作失败：' + err.message + '\n请检查浏览器权限（iOS：Safari设置→画中画；安卓：Chrome设置→站点设置→画中画）');
                 console.error('PiP切换失败：', err);
             }
         }
 
+        // 4. 绑定事件和初始化
         pipBtn.addEventListener('click', togglePip);
-
-        // Ensure we start the canvas draw loop so stream has frames even before PiP is opened
+        // 页面加载完成后初始化画中画
         window.addEventListener('load', () => {
             initPipStream();
-            // always start drawing to canvas (so captureStream provides non-black frames)
-            if (!pipLoopId) pipLoop();
+            // 启动镜像绘制（确保优先执行，避免空白）
+            setTimeout(drawPipMirror, 500);
         });
 
-        // Cleanup
+        // 5. 页面销毁时清理资源
         window.addEventListener('beforeunload', () => {
             if (canvasStream) {
                 canvasStream.getTracks().forEach(track => track.stop());
@@ -1116,16 +1171,10 @@
             if (document.pictureInPictureElement) {
                 document.exitPictureInPicture().catch(() => {});
             }
-            if (pipLoopId) cancelAnimationFrame(pipLoopId);
+            if (!pipVideo.paused) {
+                pipVideo.pause();
+            }
         });
-
-        // Also if PiP is closed externally (user action), sync button text/state
-        document.addEventListener('webkitpresentationmodechanged', function(){ /* noop for some iOS versions */ });
-        pipVideo.addEventListener('leavepictureinpicture', () => {
-            // update UI state
-            pipBtn.textContent = '画中画';
-        });
-
     </script>
 </body>
 </html>
